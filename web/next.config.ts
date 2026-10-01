@@ -38,7 +38,8 @@ const nextConfig: NextConfig = {
   basePath,
 
   // _document.tsx needs the prefix for <script src>, which Next does not add.
-  env: { NEXT_PUBLIC_BASE_PATH: basePath },
+  // NEXT_PUBLIC_PAGES marks the backend-less Pages build (see src/lib/site.ts).
+  env: { NEXT_PUBLIC_BASE_PATH: basePath, NEXT_PUBLIC_PAGES: isPages ? "1" : "" },
 
   // next/image's default loader wants a server to resize on. There is none.
   images: { unoptimized: true },

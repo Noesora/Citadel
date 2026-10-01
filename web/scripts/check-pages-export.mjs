@@ -49,6 +49,13 @@ let checked = 0;
 
 for (const file of await filesWithExtension(out, ".html")) {
   const html = await readFile(file, "utf8");
+  const relative = file.slice(out.length + 1);
+  if ((relative === "contact.html" || relative === "login.html") && /<(?:form|input|textarea)\b|mailto:/i.test(html)) {
+    problems.push(relative + ": a form or email route remains without a backend");
+  }
+  if (relative === "contact.html" && /utxo AG|nmkr\.io|citadel\.utxo\.ag|Masumi Network|Sokosumi Network/i.test(html)) {
+    problems.push(relative + ": former tenant identity remains on the public contact page");
+  }
   for (const [, ref] of html.matchAll(attr)) {
     const pathname = ref.split(/[?#]/)[0];
     // The dashboard preview is served by FastAPI at /next/app; it is not part

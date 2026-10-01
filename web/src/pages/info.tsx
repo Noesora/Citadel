@@ -332,13 +332,12 @@ export default function Info() {
             not a hand-wavy summary. Not built yet.
           </Row>
           <Row label={<Chip tone="prog">In design</Chip>} title="Search you can measure">
-            Make retrieval honest and repeatable: frozen fixtures in{" "}
-            <code className={CODE}>citadel bench</code>, published latency and recall numbers, and
-            fixes for documents that are accepted but not reachable (
+            A future node can use frozen fixtures in <code className={CODE}>citadel bench</code>{" "}
+            to measure retrieval. The original repository recorded unreachable documents (
             <a href="https://github.com/masumi-network/Citadel/issues/228">{"#" + "228"}</a>
             ) and tail recall (
             <a href="https://github.com/masumi-network/Citadel/issues/247">{"#" + "247"}</a>
-            ). The harness exists. The full benchmark run and the indexing fixes are still open.
+            ). Those are historical reports, not measurements of a Noesora-hosted node.
           </Row>
           <Row label={<Chip tone="prog">In design</Chip>} title="Structured Knowledge Citadel owns">
             Durable, first-class <span className={ROW_K}>Structured Knowledge</span> pages as the

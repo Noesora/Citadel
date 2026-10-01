@@ -1,9 +1,9 @@
 import { BAND, BAND_IN, CODE, FOOT_NOTE } from "@/components/ui";
+import { MAINTAINER_HREF, MAINTAINER_NAME, PUBLIC_PAGES } from "@/lib/site";
 
 const LICENSE_HREF =
   "https://github.com/Noesora/Citadel/blob/main/LICENSE";
 const SOURCE_HREF = "https://github.com/Noesora/Citadel";
-const OWNER_HREF = "https://utxo.ag/";
 const WINDOW = "window v0.2.0 → v0.5.1.";
 
 const COL_K =
@@ -40,21 +40,20 @@ export function SiteFooter({ note }: { note?: string | null }) {
             </p>
           </div>
           <div>
-            <p className={COL_K}>Owner</p>
+            <p className={COL_K}>Maintainer</p>
             <p className={COL_V}>
-              <a href={OWNER_HREF}>utxo AG</a>
+              <a href={MAINTAINER_HREF}>{MAINTAINER_NAME}</a>
             </p>
           </div>
           <div>
             <p className={COL_K}>Contact</p>
             <p className="m-0 text-[14.5px]">
-              <a href="/contact">Contact</a>
+              <a href="/contact">{PUBLIC_PAGES ? "Contact (closed)" : "Contact"}</a>
             </p>
           </div>
         </div>
         <p className={FOOT_NOTE}>
-          Live node: <code className={CODE}>citadel.utxo.ag</code>
-          {` · ${note || WINDOW}`}
+          {PUBLIC_PAGES ? "No live node is connected to this site" : note || WINDOW}
         </p>
       </div>
     </footer>

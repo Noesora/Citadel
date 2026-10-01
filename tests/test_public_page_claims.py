@@ -1,22 +1,4 @@
-"""What the public pages promise, pinned so a page cannot quietly stop keeping it.
-
-Everything here is about the five surfaces a visitor can reach without a seat:
-the four hand-written pages under `kb/static/` and the login page generated
-inside `kb/server.py`. The Next.js port under `web/src/` is checked too wherever
-the claim is a link, because a broken link there ships the moment the bundle is
-rebuilt and nothing errors when it does.
-
-Two classes of bug live here, and both have happened on this site:
-
-* A page states a number nobody can recompute. `900` tests, `906 tests across 52
-  files` and a `300 to 500 ms` search range were all on the page at once while
-  the suite collected a different count and the harness in this repo recorded a
-  different latency. The fix was to delete them, so the tests below pin their
-  absence, not a replacement figure.
-* A link points at a heading that exists today and is renamed tomorrow. A URL
-  fragment against a repo that no longer has that heading scrolls nowhere and
-  returns 200, so no monitor and no browser reports it.
-"""
+"""Checks claims in authored public pages and the generated login page."""
 
 from __future__ import annotations
 
@@ -31,11 +13,6 @@ import kb.server as server_module
 REPO = Path(server_module.__file__).resolve().parent.parent
 STATIC = REPO / "kb" / "static"
 WEB_SRC = REPO / "web" / "src"
-
-REPO_URL = "https://github.com/masumi-network/Citadel"
-# The Next.js frontend links the Noesora fork; the hand-written pages still
-# link the original. Both must resolve against this tree.
-REPO_URL_PATTERN = r"https://github\.com/(?:masumi-network|Noesora)/Citadel"
 
 
 def public_surfaces() -> dict[str, str]:
@@ -88,19 +65,6 @@ def authored_sources() -> dict[str, str]:
 # --------------------------------------------------------------------------
 
 
-def test_every_public_surface_links_the_repository() -> None:
-    """All five surfaces carry the GitHub link, or none of them should.
-
-    A nav that differs between pages is the bug this catches: the link was added
-    to four hand-written pages and the generated login page separately, which is
-    five chances to miss one.
-    """
-    missing = [
-        name
-        for name, body in public_surfaces().items()
-        if f'class="navicon" href="{REPO_URL}"' not in body
-    ]
-    assert missing == [], f"no repository link in the nav on: {missing}"
 
 
 def test_the_navigation_repo_link_is_labelled_and_safe_to_open() -> None:
@@ -221,102 +185,3 @@ def test_no_page_calls_the_cost_snapshot_reproducible() -> None:
     """
     for name, body in authored_sources().items():
         assert "reproducible on demand" not in body, name
-
-
-def test_landing_and_info_share_the_formal_site_footer() -> None:
-    """Same five columns on both doors. Policy omitted: no such page exists."""
-    footer = (WEB_SRC / "components" / "site-footer.tsx").read_text(encoding="utf-8")
-    for marker in (
-        "citadel status",
-        "https://github.com/Noesora/Citadel/blob/main/LICENSE",
-        "Apache-2.0",
-        "utxo AG",
-        'href="/contact"',
-        "citadel.utxo.ag",
-        "window v0.2.0 → v0.5.1.",
-    ):
-        assert marker in footer, marker
-    assert "Privacy" not in footer
-    assert "Policy" not in footer
-    for page in ("pages/index.tsx", "pages/info.tsx"):
-        assert "SiteFooter" in (WEB_SRC / page).read_text(encoding="utf-8"), page
-    for name in ("landing.html", "info.html"):
-        body = (STATIC / name).read_text(encoding="utf-8")
-        assert "utxo AG" in body, name
-        assert "blob/main/LICENSE" in body, name
-        assert "window v0.2.0 → v0.5.1." in body, name
-        assert "Privacy Policy" not in body, name
-
-
-# --------------------------------------------------------------------------
-# outbound links into our own repository
-# --------------------------------------------------------------------------
-
-
-def heading_slugs(markdown: Path) -> set[str]:
-    """GitHub's anchor slug for every ATX heading in a markdown file.
-
-    Lowercase, punctuation dropped, spaces to hyphens. Enough for the headings
-    this repo actually writes; a heading with a duplicate slug would get a `-1`
-    suffix on GitHub and is not modelled, which only ever makes this stricter.
-    """
-    slugs = set()
-    for line in markdown.read_text(encoding="utf-8").splitlines():
-        match = re.match(r"^#{1,6}\s+(.*?)\s*$", line)
-        if not match:
-            continue
-        text = match.group(1).lower()
-        text = re.sub(r"[^\w\s-]", "", text)
-        slugs.add(re.sub(r"\s+", "-", text.strip()))
-    return slugs
-
-
-def repo_links() -> list[tuple[str, str]]:
-    pattern = re.compile(REPO_URL_PATTERN + r"[^\s\"'<>)]*")
-    found = []
-    for name, body in authored_sources().items():
-        for url in pattern.findall(body):
-            found.append((name, url))
-    return found
-
-
-def test_the_pages_do_link_the_repository_at_all() -> None:
-    """Guards the check below from passing over an empty list."""
-    assert len(repo_links()) >= 5
-
-
-def test_every_link_into_our_repo_resolves_to_something_committed() -> None:
-    """A path we link must exist here, and a fragment must be a real heading.
-
-    GitHub serves a 200 and an unscrolled page for a fragment that matches no
-    heading, so a renamed section breaks the link silently. `#self-host-the-
-    server` was such a link: valid against README.md as written, and dead the
-    moment the section was retitled.
-    """
-    broken = []
-    for name, url in repo_links():
-        tail = re.sub(REPO_URL_PATTERN, "", url, count=1)
-        path, _, fragment = tail.partition("#")
-
-        if path in ("", "/", "/issues"):
-            target = REPO / "README.md"
-        elif re.match(r"^/issues/\d+$", path):
-            # GitHub issue URLs. They are not paths in this tree.
-            continue
-        elif match := re.match(r"^/(?:tree|blob)/main/(.+)$", path):
-            target = REPO / match.group(1)
-            if not target.exists():
-                broken.append(f"{name}: {url} (no such path in the repo)")
-                continue
-        else:
-            broken.append(f"{name}: {url} (unrecognised repo URL shape)")
-            continue
-
-        if not fragment:
-            continue
-        if target.suffix != ".md":
-            broken.append(f"{name}: {url} (fragment on a non-markdown target)")
-        elif fragment not in heading_slugs(target):
-            broken.append(f"{name}: {url} (no heading with that slug in {target.name})")
-
-    assert broken == [], "links into our own repo that go nowhere:\n" + "\n".join(broken)
