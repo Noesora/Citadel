@@ -35,6 +35,8 @@ V8: ∀ vault-state consumers → settled false renders `Loading`; settled true 
 V9: Existing `/readyz` auth, `/api/state` public access, and healthy compatibility fields remain unchanged except additive `stages` and truthful gate status.
 V10: ∀ bounded-search HTTP error → full bounded body redacted before 500-char display trim; CLI/MCP preserve typed code/status/message & allowlisted retrieval_receipt; body >500 → no secret leak & no classification loss; absence.proven=false & upstream_truncation=null
 V11: ∀ local #247 fixture → repair splits oversized content into chunks ≤ configured embedder budget & distinctive tail content retrieves from a non-head chunk; local proof ≠ production corpus proof.
+V12: ∀ public contact submit → success only if 2xx JSON receipt confirms `stored=true` or `delivered=true`; 2xx HTML or unknown body ≠ success.
+V13: ∀ contact submit before hydration → native `POST /contact`; name, email, message ∉ URL.
 
 ## §T TASKS
 id|status|task|cites
@@ -54,6 +56,8 @@ B1|2026-09-11|CLI/MCP sliced error text before parse/redact → timeout metadata
 B2|2026-09-15|pytest launcher shebang points at a missing historical virtualenv, so focused verification cannot start|external test runner
 B3|2026-09-15|offline vector regression compared marker tokenization without its preceding source-space token, masking a valid tail match|test fixture
 B4|2026-09-15|non-monotonic prefix count can place over-limit fallback piece into current without guard|V11
+B5|2026-10-01|Pages `/contact` 2xx HTML fallback counted as delivered without receipt|V12
+B6|2026-10-01|contact form omitted method/action; prehydration submit encoded PII in GET URL|V13
 ## Least confident decisions
 1. Stage shape: additive top-level `stages` map with four named `{status, reason}` values chosen; [INFERRED: user specified field names/status vocabulary, while current code has no finalized schema].
 2. `pending` vs `unavailable`: unmeasured-but-expected stages use `pending`; dependency/read path unavailable uses `unavailable`; [INFERRED: distinguishes work not finished from no measurement, consistent with ADR-0020 missing ≠ zero].

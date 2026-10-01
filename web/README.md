@@ -80,7 +80,12 @@ directory to `out` before deploying. This build copies the two font files from
 `CF_PAGES=1 npm run build:pages --workspace web`. The Pages build removes the
 generated `app.html` and `app/` dashboard routes; `npm run build` keeps them for
 FastAPI. Direct dashboard URLs return 404 on Pages. Sign-in cannot complete
-on this static site without the hosted backend.
+on this static site without the hosted backend. The contact form also has no Pages
+Function yet. It requires a JSON storage or delivery receipt before showing success.
+Before hydration, the native form uses POST so the message stays out of the URL.
+The exported `/app` HTML is absent, but its JavaScript chunk remains under
+`_next/static`. That chunk exposes route and API names. Backend authorization,
+not the Pages export, protects private data.
 
 The build script also checks root-relative HTML src and href values and CSS
 url() references against exported files. It does not validate network APIs or
