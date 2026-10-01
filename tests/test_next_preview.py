@@ -157,8 +157,8 @@ def test_landing_and_info_share_the_formal_site_footer() -> None:
         / "site-footer.tsx"
     ).read_text(encoding="utf-8")
     assert "citadel status" in footer
-    assert "github.com/masumi-network/Citadel" in footer
-    assert "https://github.com/masumi-network/Citadel/blob/main/LICENSE" in footer
+    assert "github.com/Noesora/Citadel" in footer
+    assert "https://github.com/Noesora/Citadel/blob/main/LICENSE" in footer
     assert "Apache-2.0" in footer
     assert "utxo AG" in footer
     assert 'href="/contact"' in footer

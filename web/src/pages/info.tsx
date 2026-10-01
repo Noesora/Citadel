@@ -189,7 +189,7 @@ export default function Info() {
         <Verified>
           Self-host cost is mostly RAM: 24h 2026-08-17 about $23; 7-day 2026-08-14
           about $58. Not a ceiling; method in the{" "}
-          <a href="https://github.com/masumi-network/Citadel/tree/main/scripts/bench">
+          <a href="https://github.com/Noesora/Citadel/tree/main/scripts/bench">
             bench harness
           </a>
           .

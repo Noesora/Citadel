@@ -176,6 +176,10 @@ uses.
 
 ## Theme
 
+Citadel uses Noesora's provisional paper and ink palette, blue accent, and vermilion hero sun.
+The Pixel Bastion stays Citadel's mark. The Noetic Gate links to Noesora as an endorsement.
+Pages uses the Gate as its favicon; the FastAPI export keeps Citadel's favicon.
+
 Light is the default for everyone. Dark is an explicit choice, stored under the
 `citadel-info-theme` localStorage key, the same key the hand-written pages use,
 so the choice survives crossing between `/next` and `/info`, and applied as

@@ -446,8 +446,8 @@ export default function UseCases() {
         <div className={PILLARS}>
           <Card title="The source code">
             <p className={CARD_P}>
-              <a href="https://github.com/masumi-network/Citadel">
-                github.com/masumi-network/Citadel
+              <a href="https://github.com/Noesora/Citadel">
+                github.com/Noesora/Citadel
               </a>{" "}
               is Apache-2.0, with the full commit and test history, and the written record of every
               significant design decision.

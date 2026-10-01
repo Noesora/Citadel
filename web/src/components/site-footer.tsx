@@ -1,8 +1,8 @@
 import { BAND, BAND_IN, CODE, FOOT_NOTE } from "@/components/ui";
 
 const LICENSE_HREF =
-  "https://github.com/masumi-network/Citadel/blob/main/LICENSE";
-const SOURCE_HREF = "https://github.com/masumi-network/Citadel";
+  "https://github.com/Noesora/Citadel/blob/main/LICENSE";
+const SOURCE_HREF = "https://github.com/Noesora/Citadel";
 const OWNER_HREF = "https://utxo.ag/";
 const WINDOW = "window v0.2.0 → v0.5.1.";
 
@@ -12,12 +12,13 @@ const COL_V = "m-0 text-[14.5px] text-ink-2";
 const COLS =
   "grid grid-cols-5 gap-8 border-t border-border pt-8 max-[900px]:grid-cols-3 max-[620px]:grid-cols-1 max-[620px]:gap-5";
 
-/* A closing footer that is itself a band is full-bleed, so it carries no top
+/* The footer is ink on both themes (see .site-footer in globals.css). A closing
+   footer that is itself a band is full-bleed, so it carries no top
    margin: the gap an in-column footer wants would show as a stripe of --ground
    between two bands. */
 export function SiteFooter({ note }: { note?: string | null }) {
   return (
-    <footer className={`${BAND} bg-surface`}>
+    <footer className={`${BAND} site-footer bg-surface`}>
       <div className={BAND_IN}>
         <div className={COLS}>
           <div>
@@ -29,7 +30,7 @@ export function SiteFooter({ note }: { note?: string | null }) {
           <div>
             <p className={COL_K}>Source</p>
             <p className="m-0 text-[14.5px]">
-              <a href={SOURCE_HREF}>github.com/masumi-network/Citadel</a>
+              <a href={SOURCE_HREF}>github.com/Noesora/Citadel</a>
             </p>
           </div>
           <div>

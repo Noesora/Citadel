@@ -1,4 +1,5 @@
 import { Mark } from "@/components/mark";
+import { NoesoraEndorsement } from "@/components/noetic-gate";
 import { ThemeButton } from "@/components/theme-button";
 import { MEASURE } from "@/components/ui";
 
@@ -14,17 +15,19 @@ const LINKS: Array<{ href: string; label: string }> = [
    two-line lumps). Below 470px the bar wraps into two rows instead (see the
    max-[470px] variants on the container), so nowrap never overflows. */
 const LINK =
-  "whitespace-nowrap px-[11px] py-1.5 text-[13px] font-medium no-underline text-ink-2 transition-[color,background-color] duration-150 hover:text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[12.5px] max-[470px]:px-1.5 max-[470px]:py-2";
+  "whitespace-nowrap px-[11px] py-2 font-mono text-xs uppercase tracking-[.06em] underline decoration-1 underline-offset-[6px] transition-[color,text-decoration-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[11px] max-[620px]:tracking-[.03em] max-[470px]:px-1.5 max-[470px]:py-2.5";
 
-const LINK_CURRENT = "text-accent-ink bg-accent-soft hover:text-accent-ink hover:bg-accent-soft";
+const LINK_IDLE = "text-ink-2 decoration-transparent hover:text-ink hover:decoration-current";
+const LINK_CURRENT = "text-ink decoration-current";
 
 /* Sign in is the one destination in the nav that is a door rather than a page,
    so it carries a border. */
 const SIGN_IN =
-  "ml-1.5 whitespace-nowrap px-3 py-[5px] text-[13px] font-medium no-underline text-ink border border-border-2 transition-[color,border-color] duration-150 hover:text-accent-ink hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[12.5px] max-[470px]:ml-0 max-[470px]:px-1.5 max-[470px]:py-[7px]";
+  "ml-1.5 whitespace-nowrap px-3 py-[7px] font-mono text-xs font-bold uppercase tracking-[.05em] text-ink no-underline border border-ink transition-[color,background-color] duration-150 hover:bg-ink hover:text-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[11px] max-[470px]:ml-0 max-[470px]:px-1.5 max-[470px]:py-[9px]";
 
 /* The shared top navigation. Sticky at the page edge, filled so scrolled
- * content does not show through. Square, like the rest of the chrome.
+ * content does not show through. Square, like the rest of the chrome. Labels
+ * are mono caps and the current page is underlined, as on the Noesora landing.
  *
  * Every link points at a hand-written page, so these are plain <a> and not
  * next/link: they are full document loads by definition, and a client-side
@@ -57,20 +60,25 @@ export function TopNav({
       <div className={`${MEASURE} flex items-center gap-3.5 py-[11px] max-[620px]:gap-2 max-[620px]:py-[9px] max-[470px]:flex-wrap max-[470px]:gap-y-0.5`}>
         <a
           href="/"
-          className="mr-auto flex items-center gap-2.5 text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          aria-label="Citadel home"
+          className="mr-auto flex items-center gap-2.5 text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent min-[1000px]:mr-0"
         >
           <Mark />
-          <span className="text-[13px] font-semibold uppercase leading-[1.1] tracking-[.12em] max-[620px]:hidden">
+          <span className="font-display text-[22px] leading-[1.1] tracking-[-.02em] max-[660px]:hidden">
             Citadel
           </span>
         </a>
+        {/* The secondary mark: endorsement, not identity. From 1000px it sits
+            beside the wordmark; below that the hero carries it instead (see
+            HeroBand), so exactly one is on screen at any width. */}
+        <NoesoraEndorsement className="mr-auto ml-1 hidden border-l border-border-2 pl-3.5 min-[1000px]:flex" />
         <div className="flex items-center gap-0.5 max-[470px]:order-3 max-[470px]:w-full max-[470px]:justify-between max-[470px]:gap-0">
           {LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
               aria-current={link.href === current ? "page" : undefined}
-              className={link.href === current ? `${LINK} ${LINK_CURRENT}` : LINK}
+              className={`${LINK} ${link.href === current ? LINK_CURRENT : LINK_IDLE}`}
             >
               {link.label}
             </a>
@@ -81,7 +89,7 @@ export function TopNav({
         </div>
         <ThemeButton />
         <a
-          href="https://github.com/masumi-network/Citadel"
+          href="https://github.com/Noesora/Citadel"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="GitHub repository"
