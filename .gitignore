@@ -78,4 +78,5 @@ runs/
 # directories that produce it.
 web/.next/
 web/out/
+web/.wrangler/
 *.tsbuildinfo

@@ -68,6 +68,19 @@ that source and output can disagree: rebuild and commit together.
 
 `web/.next/` and `web/out/` are build scratch and are ignored.
 
+### Cloudflare Pages
+
+The public landing is also published by the Cloudflare Pages project `citadel`
+(`citadel.noesora.xyz`). Pages serves a directory from the site root, so that
+build has no `/next` prefix: `next.config.ts` sets `basePath` to `""` when
+`CF_PAGES=1`, which Pages injects into its build. Set the Pages project root
+directory to `web`, build command to `npm run build:pages`, and build output
+directory to `out` before deploying. This build copies the two font files from
+`kb/static/fonts/` into the export. Run it locally with
+`CF_PAGES=1 npm run build:pages --workspace web`. The dashboard preview links
+(`/next/app/*`) still require FastAPI and return 404 on Pages. Sign-in cannot
+complete on this static site without the hosted backend.
+
 ## Two things that are not free to change
 
 ### 1. The router is the Pages Router, because of the CSP

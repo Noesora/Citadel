@@ -4,10 +4,11 @@ import { Head, Html, Main, NextScript } from "next/document";
  *
  * Two things are worth knowing here.
  *
- * 1. `/next/theme.js` is written out in full rather than resolved from
- *    basePath, because <script src> in _document is emitted verbatim. It has to
- *    stay in step with `basePath` in next.config.ts and with the route in
- *    kb/server.py; all three say /next.
+ * 1. The theme script URL is `${basePath}/theme.js`, with basePath passed in
+ *    from next.config.ts as NEXT_PUBLIC_BASE_PATH, because <script src> in
+ *    _document is emitted verbatim and Next does not prefix it. The FastAPI
+ *    export says /next (kb/server.py serves it there); the Cloudflare Pages
+ *    export (CF_PAGES=1) and `next dev` say "".
  *
  * 2. There is no inline <script> and no inline <style> anywhere in this tree,
  *    and none of Next's own output adds one either. The Pages Router serialises
@@ -28,7 +29,7 @@ export default function Document() {
         {/* Not deferred: the attribute has to be on <html> before first paint,
             or someone who chose dark gets a white flash on every navigation.
             It costs one getItem and one setAttribute. */}
-        <script src="/next/theme.js" />
+        <script src={`${process.env.NEXT_PUBLIC_BASE_PATH}/theme.js`} />
       </Head>
       <body>
         <Main />

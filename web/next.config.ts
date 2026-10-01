@@ -21,13 +21,24 @@ import type { NextConfig } from "next";
  */
 const isDev = process.env.NODE_ENV === "development";
 
+// Cloudflare Pages injects CF_PAGES=1 into its build. The Pages site is the
+// public landing served from the root of citadel.noesora.xyz, so it has no
+// /next prefix; the FastAPI export (kb/webui/) still does.
+const isPages = process.env.CF_PAGES === "1";
+
+// Production export is served by FastAPI at /next. `next dev` drops the
+// prefix so the same <a href="/info"> links resolve on localhost:3000, and the
+// Cloudflare Pages build drops it because Pages serves out/ at the site root.
+// The committed export still prefixes every asset with /next.
+const basePath = isDev || isPages ? "" : "/next";
+
 const nextConfig: NextConfig = {
   output: "export",
 
-  // Production export is served by FastAPI at /next. `next dev` drops the
-  // prefix so the same <a href="/info"> links resolve on localhost:3000.
-  // The committed export still prefixes every asset with /next.
-  basePath: isDev ? "" : "/next",
+  basePath,
+
+  // _document.tsx needs the prefix for <script src>, which Next does not add.
+  env: { NEXT_PUBLIC_BASE_PATH: basePath },
 
   // next/image's default loader wants a server to resize on. There is none.
   images: { unoptimized: true },
