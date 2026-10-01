@@ -2,27 +2,40 @@ import { useState, type FormEvent } from "react";
 
 import { FIELD_HINT, FIELD_INPUT, FIELD_LABEL, SUBMIT } from "@/components/ui";
 
-const OK = "Thanks. It reached us, and you will hear back within two working days.";
+const DELIVERED = "Thanks. Your message reached us.";
+const STORED = "Thanks. Your message was saved for review.";
 const GENERIC_FAILURE = "That did not go through. Please try again.";
 
 type Note = { text: string; ok: boolean } | null;
 
-/* The partnering enquiry form.
- *
- * POSTs to /contact, which relays to the org's team chat and never writes to
- * the vault (ADR-0013). Every behaviour of that endpoint is preserved here,
- * because they are the ones a visitor actually experiences:
- *
- * - The `website` field is a honeypot. A human never sees it, so anything in it
- *   marks a bot; the server answers 200 either way so a bot cannot learn it was
- *   filtered. It is positioned off-screen rather than display:none, which some
- *   bots skip.
- * - Rate limiting answers 429, a missing chat gateway answers 503, and a failed
- *   delivery answers 502. All three carry a `detail` the visitor should read,
- *   so the message from the server is shown as-is rather than replaced with a
- *   generic apology. A 503 on a node with no gateway configured is correct
- *   behaviour, not a bug: an enquiry is never accepted into a void.
- */
+export async function submitContact(data: FormData): Promise<"delivered" | "stored"> {
+  const response = await fetch("/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: data.get("name") || "",
+      email: data.get("email") || "",
+      organization: data.get("organization") || "",
+      message: data.get("message") || "",
+      website: data.get("website") || "",
+    }),
+  });
+  const body: unknown = response.headers.get("content-type")?.toLowerCase().startsWith("application/json")
+    ? await response.json().catch(() => null)
+    : null;
+  const receipt = body && typeof body === "object"
+    ? body as { detail?: unknown; stored?: unknown; delivered?: unknown }
+    : null;
+  if (!response.ok) {
+    throw new Error(typeof receipt?.detail === "string" ? receipt.detail : GENERIC_FAILURE);
+  }
+  if (receipt?.stored !== true && receipt?.delivered !== true) {
+    throw new Error(GENERIC_FAILURE);
+  }
+  return receipt.delivered === true ? "delivered" : "stored";
+}
+
+/* The website field is a honeypot. Only a JSON receipt can show submission success. */
 export function ContactForm() {
   const [note, setNote] = useState<Note>(null);
   const [sending, setSending] = useState(false);
@@ -35,23 +48,9 @@ export function ContactForm() {
 
     const data = new FormData(form);
     try {
-      const response = await fetch("/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.get("name") || "",
-          email: data.get("email") || "",
-          organization: data.get("organization") || "",
-          message: data.get("message") || "",
-          website: data.get("website") || "",
-        }),
-      });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.detail || GENERIC_FAILURE);
-      }
+      const result = await submitContact(data);
       form.reset();
-      setNote({ text: OK, ok: true });
+      setNote({ text: result === "delivered" ? DELIVERED : STORED, ok: true });
     } catch (error) {
       setNote({ text: error instanceof Error ? error.message : GENERIC_FAILURE, ok: false });
     } finally {
@@ -60,7 +59,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative mx-auto flex w-full flex-col gap-4">
+    <form method="post" action="/contact" onSubmit={onSubmit} className="relative mx-auto flex w-full flex-col gap-4">
       <div className="grid grid-cols-2 gap-3.5 max-[620px]:grid-cols-1">
         <div className="flex flex-col gap-[7px]">
           <label className={FIELD_LABEL} htmlFor="cf-name">
