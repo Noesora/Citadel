@@ -81,6 +81,10 @@ directory to `out` before deploying. This build copies the two font files from
 (`/next/app/*`) still require FastAPI and return 404 on Pages. Sign-in cannot
 complete on this static site without the hosted backend.
 
+The build script also checks root-relative HTML src and href values and CSS
+url() references against exported files. It does not validate network APIs or
+dashboard routes.
+
 ## Two things that are not free to change
 
 ### 1. The router is the Pages Router, because of the CSP
