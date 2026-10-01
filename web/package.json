@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack && node scripts/copy-export.mjs",
-    "build:pages": "next build --webpack && mkdir -p out/static/fonts && cp ../kb/static/fonts/*.woff2 out/static/fonts/ && node scripts/check-pages-export.mjs",
+    "build:pages": "next build --webpack && node scripts/strip-private-pages.mjs && mkdir -p out/static/fonts && cp ../kb/static/fonts/*.woff2 out/static/fonts/ && node scripts/check-pages-export.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

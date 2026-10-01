@@ -77,9 +77,10 @@ build has no `/next` prefix: `next.config.ts` sets `basePath` to `""` when
 directory to `web`, build command to `npm run build:pages`, and build output
 directory to `out` before deploying. This build copies the two font files from
 `kb/static/fonts/` into the export. Run it locally with
-`CF_PAGES=1 npm run build:pages --workspace web`. The dashboard preview links
-(`/next/app/*`) still require FastAPI and return 404 on Pages. Sign-in cannot
-complete on this static site without the hosted backend.
+`CF_PAGES=1 npm run build:pages --workspace web`. The Pages build removes the
+generated `app.html` and `app/` dashboard routes; `npm run build` keeps them for
+FastAPI. Direct dashboard URLs return 404 on Pages. Sign-in cannot complete
+on this static site without the hosted backend.
 
 The build script also checks root-relative HTML src and href values and CSS
 url() references against exported files. It does not validate network APIs or

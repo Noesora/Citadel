@@ -42,6 +42,9 @@ if (!(await exists(join(out, "index.html")))) {
 
 const attr = /\b(?:src|href)="(\/[^"/][^"]*|\/)"/g;
 const problems = [];
+if ((await readdir(out)).some((name) => name === "app" || name === "app.html")) {
+  problems.push("private dashboard pages remain in the public export");
+}
 let checked = 0;
 
 for (const file of await filesWithExtension(out, ".html")) {
