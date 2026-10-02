@@ -4,7 +4,7 @@ import { HeroBand } from "@/components/hero-band";
 import { PipelineDiagram } from "@/components/pipeline-diagram";
 import { WithSectionRail, type Section } from "@/components/section-index";
 import { SiteFooter } from "@/components/site-footer";
-import { PUBLIC_PAGES } from "@/lib/site";
+import { ISSUES_HREF, PUBLIC_PAGES } from "@/lib/site";
 import {
   BAND,
   BAND_IN,
@@ -302,8 +302,8 @@ export default function Home() {
               <a className={BTN} href="/use-cases#fit">
                 Consortium outline
               </a>
-              <a className={BTN} href="/contact">
-                {PUBLIC_PAGES ? "Contact (closed)" : "Contact"}
+              <a className={BTN} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
+                {PUBLIC_PAGES ? "Open an issue" : "Contact"}
               </a>
             </div>
           </div>
@@ -328,9 +328,9 @@ export default function Home() {
         </div>
         <div className="mt-[26px] flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-[13.5px] text-ink-3">
           <span>
-            Need a token?{" "}
-            <a className={END_LINK} href="/contact">
-              {PUBLIC_PAGES ? "Why contact is closed" : "Contact the operator"}
+            {PUBLIC_PAGES ? "Questions or bugs?" : "Need a token?"}{" "}
+            <a className={END_LINK} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
+              {PUBLIC_PAGES ? "Open an issue" : "Contact the operator"}
             </a>
             .
           </span>

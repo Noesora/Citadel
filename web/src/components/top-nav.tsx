@@ -4,11 +4,13 @@ import { ThemeButton } from "@/components/theme-button";
 import { MEASURE } from "@/components/ui";
 import { PUBLIC_PAGES } from "@/lib/site";
 
+/* The Pages build has no /contact: the page needs the node's relay, so it is
+   left out of the nav there rather than linked as a 404. */
 const LINKS: Array<{ href: string; label: string }> = [
   { href: "/", label: "Home" },
   { href: "/info", label: "Status" },
   { href: "/use-cases", label: "Use cases" },
-  { href: "/contact", label: "Contact" },
+  ...(PUBLIC_PAGES ? [] : [{ href: "/contact", label: "Contact" }]),
 ];
 
 /* whitespace-nowrap: with room to spare it changes nothing, and on phones it

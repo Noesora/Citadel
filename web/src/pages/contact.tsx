@@ -4,9 +4,6 @@ import { ContactForm } from "@/components/contact-form";
 import { HeroBand } from "@/components/hero-band";
 import {
   BAND_IN,
-  BTN,
-  BTN_PRIMARY,
-  CTA,
   SECTION,
   EYEBROW,
   FOOT_NOTE,
@@ -18,83 +15,14 @@ import {
   PILL,
   SecHead,
 } from "@/components/ui";
-import { ISSUES_HREF, MAINTAINER_HREF, MAINTAINER_NAME, PUBLIC_PAGES } from "@/lib/site";
+import { ISSUES_HREF, MAINTAINER_NAME } from "@/lib/site";
 
 const SOURCE_HREF = "https://github.com/Noesora/Citadel";
 
-/* The Cloudflare Pages build has no backend: no /contact relay, no inbox, no
- * email route. So it renders a notice, with no form, no mailto and no field a
- * visitor could type into. Anything that collected input here would be
- * collecting it into nothing. The self-hosted export, which does run next to a
- * node, keeps the relay form below. */
-function ContactClosed() {
-  return (
-    <>
-      <Head>
-        <title>Contact · Citadel</title>
-        <meta
-          name="description"
-          content="Contact is closed on this site: it has no form, no inbox and no email route. Source and the public issue tracker are on GitHub."
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-
-      <HeroBand current="/contact" wide>
-        <p className={EYEBROW}>Contact</p>
-        <h1 className={H1_WIDE}>
-          Contact is closed <span className="grad">for now</span>.
-        </h1>
-        <div className={`${META} mb-8`}>
-          <span className={PILL}>{MAINTAINER_NAME}</span>
-          <span className={PILL}>No form · no email route</span>
-        </div>
-        <dl className={HERO_STRIP_3}>
-          <HeroFact kicker="Source">
-            Read the code and its history on <a href={SOURCE_HREF}>GitHub</a>. It is Apache-2.0.
-          </HeroFact>
-          <HeroFact kicker="Bugs and requests">
-            Open an issue in the <a href={ISSUES_HREF}>public issue tracker</a>.
-          </HeroFact>
-          <HeroFact kicker="Status">
-            Live status and sign-in are unavailable here: no node is connected to this site.
-          </HeroFact>
-        </dl>
-      </HeroBand>
-
-      <section className={`${SECTION} bg-surface`} id="closed">
-        <div className={BAND_IN}>
-          <div className="mx-auto max-w-[34rem]">
-            <SecHead kicker="Why there is no form" title="Nothing here would be received" />
-            <p className={LEDE}>
-              This site is a static page. It has no server behind it, so a form would have nowhere
-              to send what you typed, and there is no email address that is read for this project
-              yet. This page has no form and sends nothing.
-            </p>
-            <div className={CTA}>
-              <a className={BTN_PRIMARY} href={ISSUES_HREF}>
-                Open an issue
-              </a>
-              <a className={BTN} href={SOURCE_HREF}>
-                Read the source
-              </a>
-            </div>
-            <footer className="mt-8 border-t border-border pt-5 text-[15px] text-ink-2">
-              <p>
-                Citadel is maintained by <a href={MAINTAINER_HREF}>{MAINTAINER_NAME}</a>.
-              </p>
-              <p className={FOOT_NOTE}>
-                When a way to reach the project exists, it will be listed on this page.
-              </p>
-            </footer>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
-
-
-function ContactRelay() {
+/* The self-hosted export only. The Cloudflare Pages build has no backend, so
+ * strip-private-pages.mjs removes contact.html (and this page's chunk) from it
+ * and check-pages-export.mjs rejects either one coming back. */
+export default function Contact() {
   return (
     <>
       <Head>
@@ -152,8 +80,4 @@ function ContactRelay() {
       </section>
     </>
   );
-}
-
-export default function Contact() {
-  return PUBLIC_PAGES ? <ContactClosed /> : <ContactRelay />;
 }

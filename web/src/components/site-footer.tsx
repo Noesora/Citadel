@@ -1,5 +1,5 @@
 import { BAND, BAND_IN, CODE, FOOT_NOTE } from "@/components/ui";
-import { MAINTAINER_HREF, MAINTAINER_NAME, PUBLIC_PAGES } from "@/lib/site";
+import { ISSUES_HREF, MAINTAINER_HREF, MAINTAINER_NAME, PUBLIC_PAGES } from "@/lib/site";
 
 const LICENSE_HREF =
   "https://github.com/Noesora/Citadel/blob/main/LICENSE";
@@ -46,9 +46,13 @@ export function SiteFooter({ note }: { note?: string | null }) {
             </p>
           </div>
           <div>
-            <p className={COL_K}>Contact</p>
+            <p className={COL_K}>{PUBLIC_PAGES ? "Issues" : "Contact"}</p>
             <p className="m-0 text-[14.5px]">
-              <a href="/contact">{PUBLIC_PAGES ? "Contact (closed)" : "Contact"}</a>
+              {PUBLIC_PAGES ? (
+                <a href={ISSUES_HREF}>Public issue tracker</a>
+              ) : (
+                <a href="/contact">Contact</a>
+              )}
             </p>
           </div>
         </div>

@@ -79,17 +79,21 @@ directory to `out` before deploying. This build copies the two font files from
 `kb/static/fonts/` into the export. Run it locally with
 `CF_PAGES=1 npm run build:pages --workspace web`. The Pages build removes the
 generated `app.html` and `app/` dashboard routes; `npm run build` keeps them for
-FastAPI. Direct dashboard URLs return 404 on Pages. The Pages build shows
-closed contact and sign-in notices. It has no `/contact` relay, inbox, or
-`/admin/session` endpoint, so neither page offers a form. The self-hosted
+FastAPI. Direct dashboard URLs return 404 on Pages. Pages has no `/contact`
+relay, inbox, or `/admin/session` endpoint, so `strip-private-pages.mjs` also
+removes `contact.html` and the contact page chunk: `/contact` returns 404 there,
+the nav and footer point to the public issue tracker instead, and the sign-in
+page stays a closed notice. The self-hosted
 FastAPI export keeps its contact form. That form needs a JSON storage or
 delivery receipt before it shows success. Before hydration, the native form
 uses POST so names and messages stay out of the URL. The exported `/app` HTML
 is absent, but its JavaScript chunk remains under `_next/static`. That chunk
 exposes route and API names. Backend authorization protects private data.
 
-The build check rejects dashboard HTML and backendless contact or sign-in forms
-in the Pages export. It rejects former tenant names on `/contact`. It also checks
+The build check rejects dashboard HTML, `contact.html` (or `contact/`) and the
+`contact-*.js` page chunk, backendless contact or sign-in forms, any link to
+`/contact`, and a landing page that lacks the public issue-tracker link. It
+rejects former tenant names on any page. It also checks
 root-relative HTML src and href values and CSS url() references against exported
 files. It does not validate network APIs.
 

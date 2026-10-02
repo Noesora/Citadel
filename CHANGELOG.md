@@ -6,6 +6,14 @@ All notable changes to `citadel-archive` are documented here. Format follows
 
 ## [Unreleased]
 
+- **Cloudflare Pages no longer serves `/contact`.** The Pages build removes
+  `contact.html` and the contact page chunk, so `citadel.noesora.xyz/contact`
+  returns 404 instead of a contact page. The nav drops the Contact link; the
+  footer, landing and use-cases pages point to the public issue tracker. The
+  export guard rejects a reintroduced contact page, chunk or `/contact` link.
+  The self-hosted FastAPI `GET`/`POST /contact`, `kb/static/contact.html` and
+  the `kb/webui` contact route are unchanged.
+
 - **Capture-time fingerprints and ingest locators unlock `verified` trust (#104).**
   Lifecycle-backed hits expose `_citadel.attested_content_sha256` (distinct from
   the transit `content_sha256`). `verified` requires that fingerprint together
