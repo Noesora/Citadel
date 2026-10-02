@@ -33,6 +33,9 @@ STATIC = REPO / "kb" / "static"
 WEB_SRC = REPO / "web" / "src"
 
 REPO_URL = "https://github.com/masumi-network/Citadel"
+# The Next.js frontend links the Noesora fork; the hand-written pages still
+# link the original. Both must resolve against this tree.
+REPO_URL_PATTERN = r"https://github\.com/(?:masumi-network|Noesora)/Citadel"
 
 
 def public_surfaces() -> dict[str, str]:
@@ -225,7 +228,7 @@ def test_landing_and_info_share_the_formal_site_footer() -> None:
     footer = (WEB_SRC / "components" / "site-footer.tsx").read_text(encoding="utf-8")
     for marker in (
         "citadel status",
-        "https://github.com/masumi-network/Citadel/blob/main/LICENSE",
+        "https://github.com/Noesora/Citadel/blob/main/LICENSE",
         "Apache-2.0",
         "utxo AG",
         'href="/contact"',
@@ -269,7 +272,7 @@ def heading_slugs(markdown: Path) -> set[str]:
 
 
 def repo_links() -> list[tuple[str, str]]:
-    pattern = re.compile(re.escape(REPO_URL) + r"[^\s\"'<>)]*")
+    pattern = re.compile(REPO_URL_PATTERN + r"[^\s\"'<>)]*")
     found = []
     for name, body in authored_sources().items():
         for url in pattern.findall(body):
@@ -292,7 +295,7 @@ def test_every_link_into_our_repo_resolves_to_something_committed() -> None:
     """
     broken = []
     for name, url in repo_links():
-        tail = url[len(REPO_URL) :]
+        tail = re.sub(REPO_URL_PATTERN, "", url, count=1)
         path, _, fragment = tail.partition("#")
 
         if path in ("", "/", "/issues"):

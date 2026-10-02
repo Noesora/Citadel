@@ -1,19 +1,7 @@
-/* Citadel — the design system, as a Tailwind theme.
- *
- * This is a port of kb/static/info.css, not a redesign. The token sets are the
- * same values, the square-corner deviation is the same deviation, and the type
- * ramp is the same ramp; what changes is that the tokens are now Tailwind
- * theme variables, so `bg-surface` and `text-ink-2` exist and a component does
- * not have to hand-write `background: var(--surface)`.
- *
- * Aligned to the AGENTIC / Masumi design system: Inter only, weight lightens as
- * size grows, sentence case, a neutral ramp plus exactly one accent (Iris
- * magenta #FF51FF), flat elevation (borders and tint, never a drop shadow).
- * The one local deviation is radius: Citadel's chrome is square everywhere, so
- * the radius scale below is zeroed and only `rounded-full` can curve anything.
- *
- * Served under a strict CSP: no inline <style>, no inline <script>, no
- * style="" written into the HTML.
+/* Citadel adopts Noesora's provisional paper, ink, blue, and vermilion.
+ * The Pixel Bastion remains Citadel's mark; the Noetic Gate endorses it.
+ * Citadel keeps square chrome and flat surfaces.
+ * A strict CSP forbids inline scripts and styles in the exported site.
  */
 
 @import "tailwindcss";
@@ -26,48 +14,38 @@
    to get before the deferred script ran. */
 @custom-variant dark (&:where(:root[data-theme="dark"], :root[data-theme="dark"] *));
 
-@font-face {
-  font-family: "Inter";
-  src: url("/static/fonts/Inter.var.woff2") format("woff2");
-  font-weight: 100 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  src: url("/static/fonts/JetBrainsMono.var.woff2") format("woff2");
-  font-weight: 100 800;
-  font-display: swap;
-}
-
 :root {
-  /* light-first: white / off-white, neutral ramp */
-  --ground: #fafafa;
-  --surface: #ffffff;
-  --surface-2: #f5f5f5;
-  --ink: #0a0a0a;
-  --ink-2: rgba(10, 10, 10, 0.56);
-  --ink-3: rgba(10, 10, 10, 0.42);
-  --border: #e5e5e5;
-  --border-2: #d4d4d4;
+  /* Noesora paper and ink: a warm-grey ground, a brighter paper for raised
+     surfaces, a mist-tinted second surface, near-black ink. Provisional: the
+     brand is not locked, so the values live here and nowhere else. */
+  --ground: #eaedea;
+  --surface: #f6f7f5;
+  --surface-2: #dfe4e1;
+  --ink: #0b1013;
+  --ink-2: #3f4e54;
+  --ink-3: #4f5d63;
+  --border: rgba(11, 16, 19, 0.18);
+  --border-2: rgba(11, 16, 19, 0.32);
 
-  /* masumi Iris Flower magenta — one accent */
-  --accent: #ff51ff;          /* fills, marks, hover, dark-mode text */
-  --accent-ink: #c010a0;      /* links / eyebrows / accent text on light */
-  --accent-soft: rgba(255, 81, 255, 0.10);
+  /* Noesora blue: the one accent. */
+  --accent: #385fcf;          /* fills, marks, hover */
+  --accent-ink: #2d4fb5;      /* links / eyebrows / accent text on light */
+  --accent-soft: rgba(56, 95, 207, 0.10);
 
-  /* Ink for text sitting on the accent fill. Its own token because it is the
-     one colour that must NOT invert: --accent is the same magenta in both
-     themes, so the text on top of it stays near-black in both. Writing --ink
-     there would flip it to near-white in dark mode and destroy the contrast,
-     and writing the hex inline hides the pairing from anyone changing the
-     accent. */
-  --on-accent: #0a0a0a;
+  /* Noesora vermilion: the hero sun, and nothing else. */
+  --vermilion: #b83a2d;
+
+  /* Ink for text sitting on the accent fill. Its own token because it must
+     NOT follow --ink: the fill changes between themes (deep blue on paper,
+     bright blue on ink) and so does the text that reads on it, and writing the
+     hex inline hides the pairing from anyone changing the accent. */
+  --on-accent: #f6f7f5;
 
   /* semantic status (functional only) */
-  --good: #16a34a;
-  --good-bg: rgba(22, 163, 74, 0.10);
-  --warn: #b45309;
-  --warn-bg: rgba(180, 83, 9, 0.10);
+  --good: #0b6130;
+  --good-bg: rgba(11, 97, 48, 0.10);
+  --warn: #8a3f05;
+  --warn-bg: rgba(138, 63, 5, 0.10);
 
   /* Sticky TopNav height. One row on desktop; GitHub control grows at 620px;
      the bar wraps at 470px. Section subnav sits directly under it. */
@@ -76,20 +54,22 @@
   --chrome-h: calc(var(--topnav-h) + var(--sectionnav-h));
 }
 :root[data-theme="light"] {
-  --ground: #fafafa; --surface: #ffffff; --surface-2: #f5f5f5;
-  --ink: #0a0a0a; --ink-2: rgba(10,10,10,0.56); --ink-3: rgba(10,10,10,0.42);
-  --border: #e5e5e5; --border-2: #d4d4d4;
-  --accent: #ff51ff; --accent-ink: #c010a0; --accent-soft: rgba(255,81,255,0.10);
-  --on-accent: #0a0a0a;
-  --good: #16a34a; --good-bg: rgba(22,163,74,0.10);
-  --warn: #b45309; --warn-bg: rgba(180,83,9,0.10);
+  --ground: #eaedea; --surface: #f6f7f5; --surface-2: #dfe4e1;
+  --ink: #0b1013; --ink-2: #3f4e54; --ink-3: #4f5d63;
+  --border: rgba(11,16,19,0.18); --border-2: rgba(11,16,19,0.32);
+  --accent: #385fcf; --accent-ink: #2d4fb5; --accent-soft: rgba(56,95,207,0.10);
+  --vermilion: #b83a2d;
+  --on-accent: #f6f7f5;
+  --good: #0b6130; --good-bg: rgba(15,110,51,0.10);
+  --warn: #8a3f05; --warn-bg: rgba(154,69,6,0.10);
 }
 :root[data-theme="dark"] {
-  --ground: #0a0a0a; --surface: #171717; --surface-2: #1f1f1f;
-  --ink: #fafafa; --ink-2: rgba(250,250,250,0.60); --ink-3: rgba(250,250,250,0.42);
-  --border: rgba(255,255,255,0.10); --border-2: rgba(255,255,255,0.16);
-  --accent: #ff51ff; --accent-ink: #ff86f2; --accent-soft: rgba(255,81,255,0.15);
-  --on-accent: #0a0a0a;
+  --ground: #0b1013; --surface: #11181c; --surface-2: #182126;
+  --ink: #eaedea; --ink-2: rgba(234,237,234,0.68); --ink-3: rgba(234,237,234,0.56);
+  --border: rgba(234,237,234,0.14); --border-2: rgba(234,237,234,0.26);
+  --accent: #6f92ff; --accent-ink: #8fa9ff; --accent-soft: rgba(111,146,255,0.16);
+  --vermilion: #d2503f;
+  --on-accent: #0b1013;
   --good: #4ade80; --good-bg: rgba(74,222,128,0.12);
   --warn: #f59e0b; --warn-bg: rgba(245,158,11,0.12);
 }
@@ -116,8 +96,9 @@
   --color-warn: var(--warn);
   --color-warn-bg: var(--warn-bg);
 
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", monospace;
 }
 
 /* Square chrome, enforced rather than remembered: every step of the radius
@@ -147,13 +128,29 @@
     font-weight: 400;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Display serif for the two heading levels that carry the page. h3 and
+     below are card titles and stay in the body face. */
+  h1,
+  h2 {
+    font-family: var(--font-display);
   }
   a {
     color: var(--accent-ink);
-    text-underline-offset: 2px;
+    text-underline-offset: 3px;
+  }
+  /* A link inside running text is told apart by more than hue: blue against
+     grey-green ink is under the 3:1 that WCAG 1.4.1 asks of colour alone.
+     Chrome links (nav, buttons, cards) set their own decoration, and utilities
+     outrank this base layer. */
+  :is(p, dd, li) a {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
   }
   ::selection {
-    background: var(--accent-soft);
+    background: var(--accent);
+    color: var(--on-accent);
   }
   /* Tailwind's preflight sets border-color to currentColor. Everything here is
      hairline-on-neutral, so the token is the better default. */
@@ -191,7 +188,7 @@
 
 /* --- motion ---------------------------------------------------------------
    Two ambient animations live on this page and both are opinions, not
-   information: the drifting hero glow and the rotating headline. Asking for
+   information: the breathing hero sun and the rotating headline. Asking for
    less motion stops them dead rather than speeding them up. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -202,35 +199,44 @@
   .flowcanvas .react-flow__edge-path { animation: none !important; }
 }
 
-/* --- the hero glow --------------------------------------------------------
-   A soft accent blob behind the headline, anchored off-canvas so only its
-   falloff is on screen. CSS rather than a utility because it is a keyframed
-   radial gradient, and because dark mode needs a weaker one: the same alpha
-   over #0a0a0a reads as a magenta wash rather than a glow. */
+/* --- the hero sun ---------------------------------------------------------
+   One vermilion disc and a hairline ring, parked in the top-right of the hero
+   as the Noesora landscape's sun. The class keeps its old name because 404 and
+   login render the same element. It sits behind the header (z-index 0 under
+   z-[1]) and below 900px drops to a tint so a headline that runs across it
+   still reads: ink on solid vermilion is only ~3.7:1. */
 .hero-glow {
-  position: absolute; top: -300px; right: -190px; z-index: 0;
-  width: 840px; height: 840px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(255,81,255,.30) 0%, rgba(255,81,255,.10) 42%, rgba(255,81,255,0) 70%);
-  animation: drift 20s ease-in-out infinite alternate;
-  will-change: transform;
+  position: absolute; z-index: 0; pointer-events: none;
+  top: clamp(32px, 5vw, 64px); right: clamp(24px, 8vw, 144px);
+  width: clamp(80px, 11vw, 168px); aspect-ratio: 1; border-radius: 50%;
+  background: var(--vermilion); opacity: .92;
+  animation: sun-breathe 9s ease-in-out infinite alternate;
 }
-:root[data-theme="dark"] .hero-glow {
-  background: radial-gradient(circle, rgba(255,81,255,.14) 0%, rgba(255,81,255,.05) 42%, rgba(255,81,255,0) 70%);
+.hero-glow::before {
+  content: ""; position: absolute; inset: -22%; border-radius: 50%;
+  border: 1px solid var(--border-2);
 }
-@keyframes drift {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(-90px, 60px, 0) scale(1.16); }
+@keyframes sun-breathe {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
 }
-@media (max-width: 620px) {
-  .hero-glow { top: -220px; right: -240px; width: 560px; height: 560px; }
+@media (max-width: 900px) {
+  .hero-glow { opacity: .2; right: clamp(12px, 5vw, 48px); }
 }
 
-/* One glow, one anchor, one drift, on every page. There were per-page variants
-   for a while, on the theory that a set of pages that each placed it
-   differently would not read as one template stamped five times. In practice
-   the blob appearing to jump corner to corner across a navigation was
-   distracting rather than interesting, so it holds still. The variants are not
-   ported. */
+/* --- the inverse footer ---------------------------------------------------
+   The closing band is ink on both themes, as on the Noesora landing. Tokens
+   are re-declared on the element rather than every footer utility being
+   overridden, so text-ink-2, bg-surface-2 and the base link colour all resolve
+   to their on-ink values with no extra classes. Dark mode goes a step deeper
+   than the page ground so the band still reads as a band. */
+.site-footer {
+  --surface: #0b1013; --surface-2: #182126;
+  --ink: #eaedea; --ink-2: #c7cfcc; --ink-3: #aab4b0;
+  --border: rgba(234,237,234,0.22); --border-2: rgba(234,237,234,0.32);
+  --accent-ink: #8fa9ff;
+}
+:root[data-theme="dark"] .site-footer { --surface: #070b0d; }
 
 /* --- the rotating headline ------------------------------------------------
    A fixed-height, overflow-hidden column of words that slides one line per
@@ -267,18 +273,8 @@
   100% { transform: translateY(-5.15em); }
 }
 
-/* Gradient text. background-clip: text clips to the inline box, which is tight
-   to the glyphs, so any letter whose ink overhangs its advance width gets
-   shaved on the right. Pad the painted box and pull the same amount back out of
-   the layout, so nothing moves. */
-.grad {
-  background: linear-gradient(100deg, var(--accent), var(--accent-ink));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  padding: 0 .08em;
-  margin: 0 -.08em;
-}
+/* The named class is shared by Citadel headings; paint it with Noesora blue. */
+.grad { color: var(--accent-ink); }
 
 /* The disclosure marker is replaced by a rotating chevron, so the native one
    has to go on both engines. */

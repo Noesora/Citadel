@@ -46,7 +46,7 @@ export default function Contact() {
           </HeroFact>
           <HeroFact kicker="Question">
             Ask anything the <a href="/info">live status</a> or the{" "}
-            <a href="https://github.com/masumi-network/Citadel">source</a> did not answer.
+            <a href="https://github.com/Noesora/Citadel">source</a> did not answer.
           </HeroFact>
         </dl>
       </HeroBand>
@@ -79,7 +79,7 @@ export default function Contact() {
               </p>
               <p className={FOOT_NOTE}>
                 Bugs and feature requests belong in the{" "}
-                <a href="https://github.com/masumi-network/Citadel/issues">public issue tracker</a>.
+                <a href="https://github.com/Noesora/Citadel/issues">public issue tracker</a>.
                 Already have a seat? <a href="/login">Sign in</a>.
               </p>
             </footer>
