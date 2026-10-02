@@ -20,7 +20,7 @@ const clean: Record<string, string> = {
     '<a href="https://github.com/masumi-network/Citadel/issues/228">history</a><a href="/#start">top</a>',
   ),
   "use-cases.html": page('<h2 id="fit">Fit</h2>'),
-  "login.html": page("<h1>Sign in is unavailable</h1>"),
+  "login.html": page("<h1>Sign-in closed</h1>"),
   "theme.js": "",
   "theme.css": "body{background:url(/bg.svg)}",
   "bg.svg": "<svg/>",

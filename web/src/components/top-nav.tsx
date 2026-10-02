@@ -92,7 +92,7 @@ export function TopNav({
             </a>
           ))}
           {PUBLIC_PAGES ? (
-            <span className={SIGN_IN_OFF}>Sign in unavailable</span>
+            <span className={SIGN_IN_OFF}>Sign-in closed</span>
           ) : (
             <a href="/login" className={SIGN_IN}>
               Sign in
