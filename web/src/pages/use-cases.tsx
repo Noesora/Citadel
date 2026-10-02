@@ -34,6 +34,7 @@ import {
   SecHead,
   Verified,
 } from "@/components/ui";
+import { ISSUES_HREF, MAINTAINER_NAME, PUBLIC_PAGES } from "@/lib/site";
 
 const SECTIONS: Section[] = [
   { id: "teams", label: "Use cases" },
@@ -109,7 +110,7 @@ export default function UseCases() {
         <title>Citadel</title>
         <meta
           name="description"
-          content="What teams run Citadel for, and how utxo AG joins EU consortia as a work-package partner: an open-source system that keeps a project's records organised, access-controlled and auditable."
+          content="What teams run Citadel for, and a draft work-package outline an EU consortium can adapt: an open-source system that keeps a project's records organised, access-controlled and auditable."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -131,7 +132,7 @@ export default function UseCases() {
           .
         </h1>
         <div className={META}>
-          <span className={PILL}>utxo AG · Zug, Switzerland</span>
+          <span className={PILL}>{MAINTAINER_NAME}</span>
           {partner ? <span className={PILL}>Looking for: one work package</span> : null}
         </div>
         <div className="mt-6 inline-flex" id="audience" role="group" aria-label="Use case audience">
@@ -171,7 +172,8 @@ export default function UseCases() {
               Consortium
             </dt>
             <dd className="m-0 max-w-[46ch] text-[17.5px] leading-[1.7] text-ink-2">
-              utxo AG brings this system to an EU project as one work package.
+              Citadel can be built into an EU project as one work package. The outline below is for
+              you to adapt.
             </dd>
           </div>
         </dl>
@@ -206,9 +208,10 @@ export default function UseCases() {
         </div>
         {partner ? (
           <Verified>
-            The rest of this page is the same system offered to EU consortia as a work-package
-            partner. If you are here as a team rather than a coordinator, <a href="/">the home page</a>{" "}
-            and <a href="/info">the live status</a> are the shorter read.
+            The rest of this page is a draft outline for an EU consortium considering Citadel as a
+            work package. If you are here as a team rather than a coordinator,{" "}
+            <a href="/">the home page</a> and <a href="/info">the status report</a> are the
+            shorter read.
           </Verified>
         ) : null}
       </Band>
@@ -253,7 +256,7 @@ export default function UseCases() {
             </div>
             <div>
               <h3 className={ROW_H3}>
-                Running in production today: you can check it before committing
+                Implemented in the open-source release: you can check it before committing
               </h3>
               <p className={CARD_P}>
                 Records flow in automatically from code repositories, issue trackers and documents.
@@ -266,7 +269,7 @@ export default function UseCases() {
                 <ul className={DEEP_UL}>
                   <DeepLi>Apache-2.0, public repository, CI on every push.</DeepLi>
                   <DeepLi>
-                    Live hosted node with a public state report and a no-secrets status endpoint.
+                    Self-hostable node with a public state report and a no-secrets status endpoint.
                   </DeepLi>
                   <DeepLi>Seat-bound tokens, role-scoped tool access, per-call audit.</DeepLi>
                   <DeepLi>
@@ -292,10 +295,10 @@ export default function UseCases() {
 
           <div className={CARD_ROW}>
             <div className="flex pt-[3px]">
-              <Chip tone="prog">We&apos;d build</Chip>
+              <Chip tone="prog">Roadmap</Chip>
             </div>
             <div>
-              <h3 className={ROW_H3}>Specified in our roadmap, funded by the project</h3>
+              <h3 className={ROW_H3}>Specified in the roadmap, needs project funding or contributors</h3>
               <p className={CARD_P}>
                 Making every single item traceable back to the exact document and moment it came
                 from. Spotting when two records <span className={ROW_K}>disagree</span> and keeping
@@ -398,41 +401,17 @@ export default function UseCases() {
       </Band>
 
       <Band tone="grey" id="ask" hidden={!partner}>
-        <SecHead kicker="The ask" title="One work package, scoped to your call" />
-        {/* The four-tile metrics block that used to sit here is gone. Scope and
-            cost are worked out after a contact request, not published: a figure
-            on a public page is wrong for almost every project that reads it.
-            Two facts from those tiles survive in the rows below rather than
-            vanishing with them — Apache-2.0 as a delivery commitment in Role,
-            and the extra country in Eligibility, which already said it. */}
+        <SecHead kicker="Adopting it" title="One work package, scoped to your call" />
         <p className={LEDE}>
           Effort and cost depend on the call, the pilot systems, and which partners cover what
-          around us. We work those out with you rather than publishing a figure that would be wrong
-          for your project. Send us the call and the gap, and we come back with a costed work
-          package written against your structure.
+          around the work package. Nobody is offering to run or cost it from this site; the outline
+          above is written for a coordinator to lift, edit and assign.
         </p>
         <div className={ROWS}>
-          <Row label={<Chip tone="ship">Role</Chip>} title="A partner running one work package">
-            We run the work package and hand over everything under Apache-2.0, plus support on the
-            open-source release and dissemination. If your consortium is already full, we are just
-            as happy as an <span className={ROW_K}>associated partner</span> or a subcontractor, and
-            what we build does not change.
-          </Row>
-          <Row
-            label={<Chip tone="ship">Eligibility</Chip>}
-            title="Switzerland is inside the Digital Europe Programme"
-          >
-            Since 2025, Swiss organisations take part as full partners and can even lead, across{" "}
-            <span className={ROW_K}>Specific Objectives 1, 2, 4 and 5</span>, though not 3 or 6. So
-            we add a country to your count instead of complicating it.
-          </Row>
-          <Row
-            label={<Chip tone="prog">Co-funding</Chip>}
-            title="We apply for Swiss money toward our own share"
-          >
-            Swiss participants can ask SERI to co-fund the part the EU grant doesn&apos;t cover,
-            which lowers what the consortium carries on our line. It is granted on request, so we
-            treat it as likely rather than certain.
+          <Row label={<Chip tone="ship">Licence</Chip>} title="Apache-2.0, nothing to sign">
+            Everything is published under Apache-2.0, so a consortium can deliver the work package
+            itself or with any <span className={ROW_K}>partner or subcontractor</span> it chooses.
+            What gets built does not depend on who does the work.
           </Row>
         </div>
       </Band>
@@ -440,8 +419,9 @@ export default function UseCases() {
       <Band tone="white" id="verify">
         <SecHead kicker="Check us" title="Verify before you commit to anything" />
         <p className={LEDE}>
-          The page you are reading is served by the system it describes. Nothing here needs to be
-          taken on trust.
+          {PUBLIC_PAGES
+            ? "The source is public. Nothing here needs to be taken on trust, and nothing on this site is a live system."
+            : "The page you are reading is served by the system it describes. Nothing here needs to be taken on trust."}
         </p>
         <div className={PILLARS}>
           <Card title="The source code">
@@ -456,37 +436,55 @@ export default function UseCases() {
           </Card>
           <Card title="The running system">
             <p className={CARD_P}>
-              <a href="/info">Its own live status report</a>: current numbers, what shipped when,
-              and what is planned, generated by the system rather than written about it.
+              {PUBLIC_PAGES ? (
+                <>
+                  <a href="/info">The published status report</a>: numbers, what shipped when, and
+                  what is planned, as of its last publish. No node is connected to this site.
+                </>
+              ) : (
+                <>
+                  <a href="/info">Its own live status report</a>: current numbers, what shipped
+                  when, and what is planned, generated by the system rather than written about it.
+                </>
+              )}
             </p>
-            <span className={CARD_TAG}>served by the node</span>
+            <span className={CARD_TAG}>{PUBLIC_PAGES ? "static report" : "served by the node"}</span>
           </Card>
         </div>
       </Band>
 
       <section className={`${BAND} bg-accent-soft`} id="talk" hidden={!partner || undefined}>
         <div className={BAND_IN}>
-          <SecHead kicker="Talk to us" title="Tell us the call and the gap" />
+          <SecHead
+            kicker="Contact"
+            title={PUBLIC_PAGES ? "No contact route is open right now" : "Tell the operator the call and the gap"}
+          />
           <p className={LEDE}>
-            Send the call identifier, the topic, and the piece you need covered. We reply with a
-            work package written against your structure rather than ours, usually within two working
-            days.
+            {PUBLIC_PAGES
+              ? "This site has no form, no inbox and no email route, and nobody is offering to staff a work package from it. Read the source, or open an issue in the public tracker."
+              : "Send the call identifier, the topic, and the piece you need covered to the operator of this node."}
           </p>
           <div className={CTA}>
-            <a className={BTN_PRIMARY} href="/contact">
-              Contact us
+            <a className={BTN_PRIMARY} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
+              {PUBLIC_PAGES ? "Open an issue" : "Contact the operator"}
             </a>
             <a className={BTN} href="/info">
-              See the live status
+              {PUBLIC_PAGES ? "Read the status report" : "See the live status"}
             </a>
           </div>
           <footer className="mt-[34px] text-[15px] text-ink-2">
             <p className={FOOT_NOTE}>
-              Use cases and partnering profile · the live pill above reads from{" "}
-              <code className="bg-surface-2 px-1.5 py-[1.5px] font-mono text-[.84em] text-ink">
-                /api/state
-              </code>{" "}
-              on this node.
+              {PUBLIC_PAGES ? (
+                "Use cases and consortium outline · live status is unavailable on this site: no node is connected."
+              ) : (
+                <>
+                  Use cases and consortium outline · the live pill above reads from{" "}
+                  <code className="bg-surface-2 px-1.5 py-[1.5px] font-mono text-[.84em] text-ink">
+                    /api/state
+                  </code>{" "}
+                  on this node.
+                </>
+              )}
             </p>
           </footer>
         </div>

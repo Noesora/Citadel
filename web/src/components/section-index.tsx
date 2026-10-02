@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { MEASURE } from "@/components/ui";
+import { PUBLIC_PAGES } from "@/lib/site";
 import { useVaultState, versionLabel, type VaultState } from "@/lib/vault-state";
 
 export type Section = { id: string; label: string };
@@ -52,6 +53,8 @@ export function healthPill(
   state: VaultState | null,
   settled: boolean
 ): HealthPill {
+  // No node is connected to the Pages build, so there is nothing to wait for.
+  if (PUBLIC_PAGES) return { text: "Live status unavailable · no node connected", tone: "muted" };
   if (!settled) return { text: "Loading", tone: "muted" };
   if (!state) return { text: "Unavailable · reload page", tone: "warn" };
   const version = versionLabel(state.version) || FALLBACK_VERSION;

@@ -3,8 +3,48 @@ import { useState, type FormEvent } from "react";
 
 import { TopNav } from "@/components/top-nav";
 import { CODE, EYEBROW, FIELD_HINT, FIELD_INPUT, FIELD_LABEL, SUBMIT } from "@/components/ui";
+import { PUBLIC_PAGES } from "@/lib/site";
 
 const REJECTED = "Seat token or access key was rejected.";
+
+/* The Pages build has no backend, so there is no session to open. Say so
+   instead of rendering a form that would POST into a 404. */
+function LoginUnavailable() {
+  return (
+    <>
+      <Head>
+        <title>Sign in unavailable · Citadel</title>
+        <meta name="description" content="Sign in is unavailable on this site: no node is connected." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <TopNav current="/login" />
+      <div className="relative overflow-hidden bg-surface p-0">
+        <div className="hero-glow" aria-hidden="true" />
+        <main className="relative flex min-h-[calc(100vh-var(--topnav-h))] items-center justify-center px-[26px] pb-20 pt-10 max-[620px]:px-4 max-[620px]:pb-[60px] max-[620px]:pt-7">
+          <div className="relative z-[1] w-full max-w-[380px]">
+            <p className={EYEBROW}>Seat access</p>
+            <h1 className="mb-3 text-[clamp(28px,4.4vw,38px)] font-light leading-[1.08] tracking-[-.03em]">
+              Sign in is unavailable.
+            </h1>
+            <p className="mb-4 text-[15px] leading-[1.6] text-ink-2">
+              This site is a static page with no node connected to it, so there is nothing to sign in
+              to and no seat token to check. Nothing typed here would be sent anywhere.
+            </p>
+            <p className="text-[13px] text-ink-3">
+              <a
+                className="border-b border-border-2 text-ink-2 no-underline hover:border-accent hover:text-accent-ink"
+                href="/"
+              >
+                Read what Citadel is
+              </a>
+              .
+            </p>
+          </div>
+        </main>
+      </div>
+    </>
+  );
+}
 
 /* Seat access.
  *
@@ -47,6 +87,8 @@ export default function Login() {
       setChecking(false);
     }
   }
+
+  if (PUBLIC_PAGES) return <LoginUnavailable />;
 
   return (
     <>
@@ -119,7 +161,7 @@ export default function Login() {
                 className="border-b border-border-2 text-ink-2 no-underline hover:border-accent hover:text-accent-ink"
                 href="/contact"
               >
-                ask us for one
+                ask the node&apos;s operator for one
               </a>
               .
             </p>

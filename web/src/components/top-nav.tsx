@@ -2,12 +2,15 @@ import { Mark } from "@/components/mark";
 import { NoesoraEndorsement } from "@/components/noetic-gate";
 import { ThemeButton } from "@/components/theme-button";
 import { MEASURE } from "@/components/ui";
+import { PUBLIC_PAGES } from "@/lib/site";
 
+/* The Pages build has no /contact: the page needs the node's relay, so it is
+   left out of the nav there rather than linked as a 404. */
 const LINKS: Array<{ href: string; label: string }> = [
   { href: "/", label: "Home" },
   { href: "/info", label: "Status" },
   { href: "/use-cases", label: "Use cases" },
-  { href: "/contact", label: "Contact" },
+  ...(PUBLIC_PAGES ? [] : [{ href: "/contact", label: "Contact" }]),
 ];
 
 /* whitespace-nowrap: with room to spare it changes nothing, and on phones it
@@ -24,6 +27,11 @@ const LINK_CURRENT = "text-ink decoration-current";
    so it carries a border. */
 const SIGN_IN =
   "ml-1.5 whitespace-nowrap px-3 py-[7px] font-mono text-xs font-bold uppercase tracking-[.05em] text-ink no-underline border border-ink transition-[color,background-color] duration-150 hover:bg-ink hover:text-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[11px] max-[470px]:ml-0 max-[470px]:px-1.5 max-[470px]:py-[9px]";
+
+/* The Pages build has no backend to sign in to. Not a link, not a button: a
+   dashed, muted label, so nothing in the bar looks like a working door. */
+const SIGN_IN_OFF =
+  "ml-1.5 whitespace-nowrap px-3 py-[7px] font-mono text-xs uppercase tracking-[.05em] text-ink-2 border border-dashed border-border-2 max-[620px]:px-2 max-[620px]:text-[11px] max-[470px]:ml-0 max-[470px]:px-1 max-[470px]:py-[5px] max-[470px]:text-[10.5px] max-[470px]:tracking-normal max-[400px]:whitespace-normal max-[400px]:text-center max-[400px]:leading-tight";
 
 /* The shared top navigation. Sticky at the page edge, filled so scrolled
  * content does not show through. Square, like the rest of the chrome. Labels
@@ -72,7 +80,7 @@ export function TopNav({
             beside the wordmark; below that the hero carries it instead (see
             HeroBand), so exactly one is on screen at any width. */}
         <NoesoraEndorsement className="mr-auto ml-1 hidden border-l border-border-2 pl-3.5 min-[1000px]:flex" />
-        <div className="flex items-center gap-0.5 max-[470px]:order-3 max-[470px]:w-full max-[470px]:justify-between max-[470px]:gap-0">
+        <div className="flex items-center gap-0.5 max-[470px]:order-3 max-[470px]:w-full max-[470px]:justify-between max-[470px]:gap-0 max-[360px]:flex-wrap">
           {LINKS.map((link) => (
             <a
               key={link.href}
@@ -83,9 +91,13 @@ export function TopNav({
               {link.label}
             </a>
           ))}
-          <a href="/login" className={SIGN_IN}>
-            Sign in
-          </a>
+          {PUBLIC_PAGES ? (
+            <span className={SIGN_IN_OFF}>Sign in unavailable</span>
+          ) : (
+            <a href="/login" className={SIGN_IN}>
+              Sign in
+            </a>
+          )}
         </div>
         <ThemeButton />
         <a

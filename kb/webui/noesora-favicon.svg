@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Noesora">
+  <!-- Noesora Noetic Gate (geometry from the public Noesora landing), paper on
+       ink so it reads on light and dark browser chrome. Pages favicon only: the
+       FastAPI export keeps /static/favicon.svg, the Citadel Pixel Bastion. -->
+  <rect width="96" height="96" fill="#0b1013"/>
+  <path d="M30 16H16V80H30M66 16H80V80H66M30 70L66 26" fill="none" stroke="#eaedea" stroke-width="5" stroke-linecap="square" stroke-linejoin="miter"/>
+  <rect x="45" y="45" width="6" height="6" fill="#6f92ff"/>
+</svg>

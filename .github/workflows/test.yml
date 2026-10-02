@@ -214,6 +214,16 @@ jobs:
             exit 1
           fi
 
+      # The Cloudflare Pages site is a different export from kb/webui: no /next
+      # prefix, no backend. build:pages ends in web/scripts/check-pages-export.mjs,
+      # which fails on an open contact or sign-in form, a mailto route, former
+      # tenant identity, a link to a service Pages does not host, or a dead
+      # link, asset or anchor. The guard itself is covered by the unit tests above.
+      - name: Build and verify the Cloudflare Pages export
+        env:
+          CF_PAGES: "1"
+        run: npm run build:pages --workspace web
+
   package-smoke:
     name: package smoke
     runs-on: ubuntu-latest

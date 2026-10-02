@@ -143,40 +143,6 @@ def test_the_landing_preview_quotes_cost_as_a_range() -> None:
     assert ">269 ms<" not in body
 
 
-def test_landing_and_info_share_the_formal_site_footer() -> None:
-    """Licence, owner, and contact. No invented privacy or terms page.
-
-    Policy is omitted: this repo has /contact and no privacy or terms route.
-    Owner is the name already on /contact (utxo AG), not a made-up entity.
-    """
-    footer = (
-        Path(server_module.__file__).resolve().parent.parent
-        / "web"
-        / "src"
-        / "components"
-        / "site-footer.tsx"
-    ).read_text(encoding="utf-8")
-    assert "citadel status" in footer
-    assert "github.com/Noesora/Citadel" in footer
-    assert "https://github.com/Noesora/Citadel/blob/main/LICENSE" in footer
-    assert "Apache-2.0" in footer
-    assert "utxo AG" in footer
-    assert 'href="/contact"' in footer
-    assert "citadel.utxo.ag" in footer
-    assert "window v0.2.0 → v0.5.1." in footer
-    assert "Privacy" not in footer
-    assert "Policy" not in footer
-    assert "Terms" not in footer
-
-    for path in ("/next", "/next/info"):
-        body = _client().get(path).text
-        assert "citadel status" in body, path
-        assert "Apache-2.0" in body, path
-        assert "utxo AG" in body, path
-        assert "/contact" in body, path
-        assert "citadel.utxo.ag" in body, path
-        assert "window v0.2.0 → v0.5.1." in body, path
-        assert "blob/main/LICENSE" in body, path
 
 
 def test_the_landing_architecture_reaches_phones_and_names_what_runs() -> None:

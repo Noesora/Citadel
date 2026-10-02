@@ -11,6 +11,8 @@
  */
 import { useEffect, useState } from "react";
 
+import { PUBLIC_PAGES } from "@/lib/site";
+
 export type RepoWeek = { start: string; commits: number };
 
 export type RepoBlock = {
@@ -56,12 +58,15 @@ let inFlight: Promise<VaultState | null> | null = null;
 
 export function fetchVaultState(): Promise<VaultState | null> {
   if (!inFlight) {
-    inFlight = fetch("/api/state", { headers: { Accept: "application/json" } })
-      .then((response) => {
-        if (!response.ok) throw new Error(`state ${response.status}`);
-        return response.json() as Promise<VaultState>;
-      })
-      .catch(() => null);
+    // The Pages build has no backend to ask: settle as unavailable, no request.
+    inFlight = PUBLIC_PAGES
+      ? Promise.resolve(null)
+      : fetch("/api/state", { headers: { Accept: "application/json" } })
+          .then((response) => {
+            if (!response.ok) throw new Error(`state ${response.status}`);
+            return response.json() as Promise<VaultState>;
+          })
+          .catch(() => null);
   }
   return inFlight;
 }

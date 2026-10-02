@@ -4,6 +4,7 @@ import { HeroBand } from "@/components/hero-band";
 import { PipelineDiagram } from "@/components/pipeline-diagram";
 import { WithSectionRail, type Section } from "@/components/section-index";
 import { SiteFooter } from "@/components/site-footer";
+import { ISSUES_HREF, PUBLIC_PAGES } from "@/lib/site";
 import {
   BAND,
   BAND_IN,
@@ -278,9 +279,9 @@ export default function Home() {
           <div className="flex flex-col border border-accent bg-surface px-7 py-[26px] max-[620px]:px-4 max-[620px]:py-5">
             <h3 className="mb-2 text-xl font-medium tracking-[-.02em]">Use it</h3>
             <p className="mb-[22px] text-[14.5px] leading-[1.6] text-ink-2">
-              Run it on your own work. Install the CLI, hand it a seat token, and your agents search
-              the same memory you do. Self-hosted and Apache-2.0, so you can read every line of what
-              it does.
+              {PUBLIC_PAGES
+                ? "Run the source on your own machine. No Noesora-hosted node or seat token is available."
+                : "Install the CLI for a node you operate. Give each agent a seat token from that node and keep its memory on your own infrastructure."}
             </p>
             <div className={`${CTA} mb-0 mt-auto`}>
               <a className={BTN_PRIMARY} href="#start">
@@ -292,17 +293,17 @@ export default function Home() {
             </div>
           </div>
           <div className="flex flex-col border border-border-2 bg-surface px-7 py-[26px] max-[620px]:px-4 max-[620px]:py-5">
-            <h3 className="mb-2 text-xl font-medium tracking-[-.02em]">Work with us</h3>
+            <h3 className="mb-2 text-xl font-medium tracking-[-.02em]">Build on it</h3>
             <p className="mb-[22px] text-[14.5px] leading-[1.6] text-ink-2">
-              Build it into your project. utxo AG joins consortia as a work-package partner,
-              bringing the vault and the team that wrote it.
+              Citadel is open source under Apache-2.0. Read the code, run it yourself, or adapt the
+              draft work-package outline for an EU project.
             </p>
             <div className={`${CTA} mb-0 mt-auto`}>
               <a className={BTN} href="/use-cases#fit">
-                Partnering profile
+                Consortium outline
               </a>
-              <a className={BTN} href="/contact">
-                Contact us
+              <a className={BTN} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
+                {PUBLIC_PAGES ? "Open an issue" : "Contact"}
               </a>
             </div>
           </div>
@@ -310,37 +311,44 @@ export default function Home() {
       </Band>
 
       <Band tone="grey" id="start">
-        <SecHead kicker="04 · Get started" title="Two commands" />
+        <SecHead kicker="04 · Get started" title="Local source checkout" />
         <p className={LEDE}>
-          You need a seat token from us to try the live node. This is not a public sandbox.{" "}
-          <a href="/contact">Contact us</a>, we send an access token, then install the CLI and the
-          agent skill.
+          {PUBLIC_PAGES
+            ? "This static site has no live node or seat token. Clone this fork to inspect the CLI; self-hosting needs your own services."
+            : "Use this source with a node you operate. That node must issue its own seat tokens. No Noesora package is published."}
         </p>
         <div className={CMD}>
-          <span className="select-none text-accent-ink">$</span> pipx install citadel-archive
+          <span className="select-none text-accent-ink">$</span> git clone https://github.com/Noesora/Citadel.git
         </div>
         <div className={CMD}>
-          <span className="select-none text-accent-ink">$</span> npx skills add masumi-network/citadel --skill citadel
+          <span className="select-none text-accent-ink">$</span> {"cd Citadel && uv sync --locked --dev"}
+        </div>
+        <div className={CMD}>
+          <span className="select-none text-accent-ink">$</span> uv run citadel --help
         </div>
         <div className="mt-[26px] flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-[13.5px] text-ink-3">
           <span>
-            Need a token?{" "}
-            <a className={END_LINK} href="/contact">
-              Contact us
+            {PUBLIC_PAGES ? "Questions or bugs?" : "Need a token?"}{" "}
+            <a className={END_LINK} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
+              {PUBLIC_PAGES ? "Open an issue" : "Contact the operator"}
             </a>
             .
           </span>
           <span>
             Already have a seat?{" "}
-            <a className={END_LINK} href="/login">
-              Sign in
-            </a>
-            .
+            {PUBLIC_PAGES ? (
+              "Sign in is unavailable on this site."
+            ) : (
+              <a className={END_LINK} href="/login">
+                Sign in
+              </a>
+            )}
+            {PUBLIC_PAGES ? null : "."}
           </span>
           <span>
-            Watch the node on the{" "}
+            {PUBLIC_PAGES ? "Read the published report on the " : "Watch the node on the "}
             <a className={END_LINK} href="/info">
-              live status page
+              {PUBLIC_PAGES ? "status report" : "live status page"}
             </a>
             .
           </span>
