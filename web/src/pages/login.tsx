@@ -9,12 +9,12 @@ const REJECTED = "Seat token or access key was rejected.";
 
 /* The Pages build has no backend, so there is no session to open. Say so
    instead of rendering a form that would POST into a 404. */
-function LoginUnavailable() {
+function LoginClosed() {
   return (
     <>
       <Head>
-        <title>Sign in unavailable · Citadel</title>
-        <meta name="description" content="Sign in is unavailable on this site: no node is connected." />
+        <title>Sign-in closed · Citadel</title>
+        <meta name="description" content="Sign-in is closed on this site. No node is connected." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <TopNav current="/login" />
@@ -24,7 +24,7 @@ function LoginUnavailable() {
           <div className="relative z-[1] w-full max-w-[380px]">
             <p className={EYEBROW}>Seat access</p>
             <h1 className="mb-3 text-[clamp(28px,4.4vw,38px)] font-light leading-[1.08] tracking-[-.03em]">
-              Sign in is unavailable.
+              Sign-in is closed on this site.
             </h1>
             <p className="mb-4 text-[15px] leading-[1.6] text-ink-2">
               This site is a static page with no node connected to it, so there is nothing to sign in
@@ -88,7 +88,7 @@ export default function Login() {
     }
   }
 
-  if (PUBLIC_PAGES) return <LoginUnavailable />;
+  if (PUBLIC_PAGES) return <LoginClosed />;
 
   return (
     <>

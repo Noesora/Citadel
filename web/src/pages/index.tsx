@@ -337,7 +337,7 @@ export default function Home() {
           <span>
             Already have a seat?{" "}
             {PUBLIC_PAGES ? (
-              "Sign in is unavailable on this site."
+              "Sign-in is closed on this site."
             ) : (
               <a className={END_LINK} href="/login">
                 Sign in
