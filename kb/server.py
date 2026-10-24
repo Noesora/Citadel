@@ -59,6 +59,7 @@ from kb.cognee_client import (
 )
 from kb.config import CitadelConfig
 from kb.contact_store import ContactStore
+from kb.waitlist_store import WaitlistStore, WaitlistStoreError, normalize_waitlist_email
 from kb.github_sync import GitHubOrgSyncer
 from kb.google_chat import GoogleChatConfigError, GoogleChatDelivery
 from kb.improvement_policy import central_improvement_dataset
@@ -1605,7 +1606,7 @@ LOGIN_HTML = """<!doctype html>
           <a href="/architecture">Architecture</a>
           <a href="/use-cases">Use cases</a>
           <a href="/contact">Contact</a>
-          <a href="/login" aria-current="page">Sign in</a>
+          <a href="/waitlist">Join waitlist</a>
         </div>
         <button class="themebtn" id="themebtn" type="button" aria-label="Toggle light or dark theme">theme</button>
         <a class="navicon" href="https://github.com/masumi-network/Citadel" aria-label="GitHub repository" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg></a>
@@ -1676,6 +1677,15 @@ _contact_hits: dict[str, list[float]] = {}
 _contact_global_hits: list[float] = []
 _contact_lock = threading.Lock()
 
+WAITLIST_PER_IP_LIMIT = 3
+WAITLIST_PER_IP_WINDOW_SECONDS = 900
+WAITLIST_GLOBAL_LIMIT = 30
+WAITLIST_GLOBAL_WINDOW_SECONDS = 3600
+WAITLIST_MAX_REQUEST_BYTES = 4096
+_waitlist_hits: dict[str, list[float]] = {}
+_waitlist_global_hits: list[float] = []
+_waitlist_lock = threading.Lock()
+
 
 def contact_client_ip(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for")
@@ -1704,6 +1714,36 @@ def contact_rate_limit_ok(client_ip: str) -> bool:
             for stale_ip, hits in list(_contact_hits.items()):
                 if not hits or now - hits[-1] >= CONTACT_PER_IP_WINDOW_SECONDS:
                     _contact_hits.pop(stale_ip, None)
+        return True
+
+
+def waitlist_rate_limit_ok(client_ip: str) -> bool:
+    """Bound unauthenticated signup attempts per IP and across this node."""
+    now = time.monotonic()
+    with _waitlist_lock:
+        recent_global = [
+            hit for hit in _waitlist_global_hits
+            if now - hit < WAITLIST_GLOBAL_WINDOW_SECONDS
+        ]
+        _waitlist_global_hits[:] = recent_global
+        if len(recent_global) >= WAITLIST_GLOBAL_LIMIT:
+            return False
+
+        recent = [
+            hit for hit in _waitlist_hits.get(client_ip, [])
+            if now - hit < WAITLIST_PER_IP_WINDOW_SECONDS
+        ]
+        if len(recent) >= WAITLIST_PER_IP_LIMIT:
+            _waitlist_hits[client_ip] = recent
+            return False
+
+        recent.append(now)
+        _waitlist_hits[client_ip] = recent
+        _waitlist_global_hits.append(now)
+        if len(_waitlist_hits) > 2000:
+            for stale_ip, hits in list(_waitlist_hits.items()):
+                if not hits or now - hits[-1] >= WAITLIST_PER_IP_WINDOW_SECONDS:
+                    _waitlist_hits.pop(stale_ip, None)
         return True
 
 
@@ -2149,6 +2189,15 @@ def get_contact_store() -> ContactStore:
         return existing
     app.state.contact_store = ContactStore(get_citadel().config.contact_store_path)
     return app.state.contact_store
+
+
+def get_waitlist_store() -> WaitlistStore:
+    existing = getattr(app.state, "waitlist_store", None)
+    if isinstance(existing, WaitlistStore):
+        return existing
+    path = Path(get_citadel().config.access_store_path).with_name("waitlist.json")
+    app.state.waitlist_store = WaitlistStore(path)
+    return app.state.waitlist_store
 
 
 def get_obsidian_sync() -> ObsidianSyncStore:
@@ -4499,7 +4548,7 @@ async def architecture_subpage(page: str) -> Response:
     return webui_page(export)
 
 
-WEBUI_PAGES = frozenset({"use-cases", "contact", "login", "presentation"})
+WEBUI_PAGES = frozenset({"use-cases", "contact", "login", "presentation", "waitlist"})
 
 
 @app.get("/next/{page}", include_in_schema=False)
@@ -4581,6 +4630,61 @@ async def contact_page() -> Response:
     if (WEBUI_DIR / "contact.html").is_file():
         return webui_page("contact")
     return FileResponse(STATIC_DIR / "contact.html")
+
+
+@app.get("/waitlist", include_in_schema=False)
+async def waitlist_page() -> Response:
+    return webui_page("waitlist")
+
+
+@app.post("/waitlist", include_in_schema=False)
+async def join_waitlist(request: Request) -> dict[str, bool]:
+    """Store one normalized address without exposing it to logs or responses."""
+    content_type = request.headers.get("content-type", "").partition(";")[0].strip().lower()
+    if content_type != "application/json":
+        raise HTTPException(status_code=422, detail="Invalid signup request.")
+
+    raw = bytearray()
+    async for chunk in request.stream():
+        if len(raw) + len(chunk) > WAITLIST_MAX_REQUEST_BYTES:
+            raise HTTPException(status_code=422, detail="Invalid signup request.")
+        raw.extend(chunk)
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise HTTPException(status_code=422, detail="Invalid signup request.") from None
+
+    if not isinstance(payload, dict) or set(payload) - {"email", "website"}:
+        raise HTTPException(status_code=422, detail="Invalid signup request.")
+    email = payload.get("email")
+    website = payload.get("website", "")
+    if not isinstance(email, str) or not isinstance(website, str) or len(website) > 200:
+        raise HTTPException(status_code=422, detail="Invalid signup request.")
+    if website.strip():
+        raise HTTPException(status_code=422, detail="Invalid signup request.")
+    try:
+        normalized_email = normalize_waitlist_email(email)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid signup request.") from None
+
+    if not waitlist_rate_limit_ok(contact_client_ip(request)):
+        raise HTTPException(status_code=429, detail="Too many signup attempts. Try again later.")
+
+    try:
+        await asyncio.to_thread(get_waitlist_store().add, normalized_email)
+    except WaitlistStoreError:
+        logger.error("Waitlist signup storage failed")
+        raise HTTPException(
+            status_code=503,
+            detail="Waitlist signup is temporarily unavailable.",
+        ) from None
+    except Exception as error:
+        logger.error("Waitlist signup storage failed (%s)", type(error).__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Waitlist signup is temporarily unavailable.",
+        ) from None
+    return {"stored": True}
 
 
 @app.post("/contact", include_in_schema=False)
