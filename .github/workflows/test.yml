@@ -11,6 +11,7 @@ name: Test
 #   uv run pytest tests/ -q
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
