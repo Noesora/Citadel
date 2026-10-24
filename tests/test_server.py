@@ -1429,14 +1429,18 @@ def test_public_pages_share_one_top_nav() -> None:
     for path, page in pages.items():
         assert 'class="topnav"' in page, path
         public_model_link = "/architecture" if path == "/login" else "/info"
-        for link in ("/", public_model_link, "/use-cases", "/contact", "/login"):
+        account_link = "/waitlist" if path == "/login" else "/login"
+        for link in ("/", public_model_link, "/use-cases", "/contact", account_link):
             assert f'<a href="{link}"' in page, f"{path} is missing the {link} nav link"
         if path == "/login":
-            assert '<a href="/info"' not in page
-        assert "Sign in</a>" in page, path
+            assert '<a href="/login"' not in page
+            assert "Join waitlist</a>" in page
+        else:
+            assert "Sign in</a>" in page, path
         # The lockup lives in the nav now, so the page header must not repeat it.
         assert 'class="brandrow"' not in page, path
-        assert f'<a href="{path}" aria-current="page">' in page, path
+        if path != "/login":
+            assert f'<a href="{path}" aria-current="page">' in page, path
 
 
 def test_public_pages_share_the_band_layout() -> None:
@@ -1491,6 +1495,7 @@ def test_every_internal_link_on_the_public_pages_resolves() -> None:
         "/architecture/self-hosting",
         "/use-cases",
         "/contact",
+        "/waitlist",
         "/login",
     )
     bodies = {path: client.get(path).text for path in pages}
@@ -1774,6 +1779,7 @@ def test_no_vendor_name_on_user_facing_surfaces() -> None:
             "/architecture/self-hosting",
             "/use-cases",
             "/contact",
+            "/waitlist",
             "/login",
             "/app",
         )

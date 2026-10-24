@@ -24,7 +24,7 @@ export default function Home() {
             <span className="headline-row" aria-hidden="true">Citadel <span className="word-window"><span className="word-track">{WORDS.map((word, i) => <span key={i}>{word}</span>)}</span></span></span>
           </h1>
           <p className="product-lede">Your agent should know what your team already learned. Citadel brings company knowledge and private working memory into the same conversation.</p>
-          <div className="product-cta"><a className="product-primary" href="/architecture/self-hosting">Get started</a><a href="/architecture">Explore the architecture <span aria-hidden="true">↗</span></a></div>
+          <div className="product-cta"><a className="product-primary" href="/waitlist">Join waitlist</a><a href="/architecture">Explore the architecture <span aria-hidden="true">↗</span></a></div>
         </MemoryScene>
 
         <section className="product-benefits product-measure" aria-label="Memory that carries work forward">
@@ -53,13 +53,13 @@ export default function Home() {
         <section id="start" className="product-close product-measure" aria-labelledby="start-title">
           <p className="product-eyebrow">Keep the context behind the work</p>
           <h2 id="start-title">Give the next task<br /><em>a better starting point.</em></h2>
-          <p>Inspect the source and run Citadel on infrastructure you operate.</p>
-          <div className="product-cta"><a className="product-primary" href="/architecture/self-hosting">Get started</a><a href="/architecture/self-hosting">Explore self-hosting <span aria-hidden="true">↗</span></a></div>
+          <p>Join the Citadel waitlist for updates about access, or inspect the source and run Citadel on infrastructure you operate.</p>
+          <div className="product-cta"><a className="product-primary" href="/waitlist">Join waitlist</a><a href="/architecture/self-hosting">Explore self-hosting <span aria-hidden="true">↗</span></a></div>
         </section>
       </main>
       <footer className="product-footer product-measure">
         <a className="product-footer-wordmark" href="/">Citadel</a>
-        <div><a href="/architecture">Architecture</a><a href="/architecture/memory">Memory &amp; sharing</a><a href="/architecture/capture">Capture hooks</a><a href="/architecture/self-hosting">Get started</a><a href={ISSUES_HREF}>Questions &amp; issues</a></div>
+        <div><a href="/architecture">Architecture</a><a href="/architecture/memory">Memory &amp; sharing</a><a href="/architecture/capture">Capture hooks</a><a href="/waitlist">Join waitlist</a><a href={ISSUES_HREF}>Questions &amp; issues</a></div>
         <p>Open source. Maintained by <a href="https://github.com/Sarthib7">@Sarthib7</a>.</p>
       </footer>
     </div>

@@ -14,7 +14,7 @@ const LINKS: Array<{ href: string; label: string }> = [
 ];
 
 /* whitespace-nowrap: with room to spare it changes nothing, and on phones it
-   stops flex shrinking a link to its longest word ("Use\ncases", "Sign\nin"
+   stops flex shrinking a link to its longest word ("Use\ncases", "Join\nwaitlist"
    two-line lumps). Below 470px the bar wraps into two rows instead (see the
    max-[470px] variants on the container), so nowrap never overflows. */
 const LINK =
@@ -23,15 +23,9 @@ const LINK =
 const LINK_IDLE = "text-ink-2 decoration-transparent hover:text-ink hover:decoration-current";
 const LINK_CURRENT = "text-ink decoration-current";
 
-/* Sign in is the one destination in the nav that is a door rather than a page,
-   so it carries a border. */
-const SIGN_IN =
-  "ml-1.5 whitespace-nowrap px-3 py-[7px] font-mono text-xs font-bold uppercase tracking-[.05em] text-ink no-underline border border-ink transition-[color,background-color] duration-150 hover:bg-ink hover:text-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[11px] max-[470px]:ml-0 max-[470px]:px-1.5 max-[470px]:py-[9px]";
-
-/* The Pages build has no backend to sign in to. Not a link, not a button: a
-   dashed, muted label, so nothing in the bar looks like a working door. */
-const SIGN_IN_OFF =
-  "ml-1.5 whitespace-nowrap px-3 py-[7px] font-mono text-xs uppercase tracking-[.05em] text-ink-2 border border-dashed border-border-2 max-[620px]:px-2 max-[620px]:text-[11px] max-[470px]:ml-0 max-[470px]:px-1 max-[470px]:py-[5px] max-[470px]:text-[10.5px] max-[470px]:tracking-normal max-[400px]:whitespace-normal max-[400px]:text-center max-[400px]:leading-tight";
+/* Waitlist registration is the public action on both site builds. */
+const JOIN_WAITLIST =
+  "ml-1.5 whitespace-nowrap border border-accent bg-accent px-3 py-[7px] font-mono text-xs font-bold uppercase tracking-[.05em] text-on-accent no-underline transition-[filter] duration-150 hover:brightness-[1.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-[620px]:px-2 max-[620px]:text-[11px] max-[470px]:ml-auto max-[470px]:px-1.5 max-[470px]:py-[9px]";
 
 /* The shared top navigation. Sticky at the page edge, filled so scrolled
  * content does not show through. Square, like the rest of the chrome. Labels
@@ -62,9 +56,8 @@ export function TopNav({
       }
       aria-label="Main"
     >
-      {/* Below 470px the single row cannot hold everything (it needs ~395px),
-          so the bar wraps: brand + theme toggle on the first row, the links
-          spread across a full-width second row. */}
+      {/* Below 470px, the bar wraps. The link row can wrap when the links and
+          waitlist action need more room. */}
       <div className={`${MEASURE} flex items-center gap-3.5 py-[11px] max-[620px]:gap-2 max-[620px]:py-[9px] max-[470px]:flex-wrap max-[470px]:gap-y-0.5`}>
         <a
           href="/"
@@ -80,7 +73,7 @@ export function TopNav({
             beside the wordmark; below that the hero carries it instead (see
             HeroBand), so exactly one is on screen at any width. */}
         <NoesoraEndorsement className="mr-auto ml-1 hidden border-l border-border-2 pl-3.5 min-[1000px]:flex" />
-        <div className="flex items-center gap-0.5 max-[470px]:order-3 max-[470px]:w-full max-[470px]:justify-between max-[470px]:gap-0 max-[360px]:flex-wrap">
+        <div className="flex items-center gap-0.5 max-[470px]:order-3 max-[470px]:w-full max-[470px]:justify-between max-[470px]:gap-0 max-[470px]:flex-wrap">
           {LINKS.map((link) => (
             <a
               key={link.href}
@@ -91,13 +84,13 @@ export function TopNav({
               {link.label}
             </a>
           ))}
-          {PUBLIC_PAGES ? (
-            <span className={SIGN_IN_OFF}>Sign in unavailable</span>
-          ) : (
-            <a href="/login" className={SIGN_IN}>
-              Sign in
-            </a>
-          )}
+          <a
+            href="/waitlist"
+            aria-current={current === "/waitlist" ? "page" : undefined}
+            className={`${JOIN_WAITLIST} ${current === "/waitlist" ? "brightness-[.92]" : ""}`}
+          >
+            Join waitlist
+          </a>
         </div>
         <ThemeButton />
         <a

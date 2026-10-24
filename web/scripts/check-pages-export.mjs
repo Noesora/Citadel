@@ -66,6 +66,7 @@ if (topLevel.some((name) => name === "info" || name === "info.html")) {
 // Pages has no backend. A control or link for one would collect or send input
 // into nothing, so none may exist on any page.
 const NO_BACKEND = /<(?:form|input|textarea)\b|mailto:/i;
+const WAITLIST_CLOSED_COPY = /waitlist registration is not open on this site yet/i;
 // Names and hosts of the previous operator. An architecture page may link two
 // upstream issues as history; any other masumi-network URL is an identity leak.
 const FORMER_IDENTITY = /utxo AG|utxo\.ag|nmkr\.io|Masumi Network|Sokosumi Network|\bZug\b/i;
@@ -86,6 +87,7 @@ const REQUIRED_PAGES = [
   "architecture/self-hosting.html",
   "use-cases.html",
   "login.html",
+  "waitlist.html",
 ];
 for (const page of REQUIRED_PAGES) {
   if (!(await exists(join(out, page)))) problems.push(page + ": page is missing from the export");
@@ -119,6 +121,15 @@ for (const file of htmlFiles) {
   const relative = file.slice(out.length + 1);
   if (NO_BACKEND.test(html)) {
     problems.push(relative + ": a form or email route remains without a backend");
+  }
+  if (relative === "waitlist.html" && !WAITLIST_CLOSED_COPY.test(html)) {
+    problems.push("waitlist.html: the static page must say waitlist registration is not open");
+  }
+  if (relative === "index.html") {
+    const scenes = [...html.matchAll(/\bdata-memory-scene="([^"]+)"/g)];
+    if (scenes.length !== 1 || scenes[0][1] !== "overview") {
+      problems.push("index.html: exactly one overview memory scene is required");
+    }
   }
   if (FORMER_IDENTITY.test(html)) {
     problems.push(relative + ": former tenant identity remains on the public site");
