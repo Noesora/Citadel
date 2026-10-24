@@ -15,6 +15,7 @@ export function HeroBand({
   wide,
   sections,
   nav = true,
+  decoration = true,
   children,
 }: {
   current?: string;
@@ -22,6 +23,7 @@ export function HeroBand({
   sections?: Section[];
   /** Set false when TopNav and SectionIndex are rendered by the page. */
   nav?: boolean;
+  decoration?: boolean;
   children: ReactNode;
 }) {
   const chrome = nav || Boolean(sections?.length);
@@ -35,7 +37,7 @@ export function HeroBand({
         </StickyChrome>
       ) : null}
       <div className="relative overflow-hidden border-b border-border bg-ground p-0">
-        <div className="hero-glow" aria-hidden="true" />
+        {decoration ? <div className="hero-glow" aria-hidden="true" /> : null}
         <div className={BAND_IN}>
           <header
             className={`relative z-[1] pt-10 max-[620px]:pt-8 ${

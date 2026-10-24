@@ -9,16 +9,19 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 const guard = join(dirname(fileURLToPath(import.meta.url)), "check-pages-export.mjs");
 const ISSUES = "https://github.com/Noesora/Citadel/issues";
 
-const nav = '<a href="/">Home</a><a href="/info">Info</a><a href="/use-cases">Use cases</a>';
+const nav = '<a href="/">Home</a><a href="/architecture">Architecture</a><a href="/use-cases">Use cases</a>';
 const page = (body: string) => `<html><body>${nav}${body}</body></html>`;
 
 // A Pages export that is closed the way the real one is: no form, no email
 // route, no node-only link, and working navigation and anchors.
 const clean: Record<string, string> = {
   "index.html": page(`<link href="/theme.css" rel="stylesheet"><script src="/theme.js"></script><h2 id="start">Start</h2><a href="${ISSUES}">Open an issue</a><a href="#start">go</a><a href="/use-cases#fit">fit</a>`),
-  "info.html": page(
+  "architecture.html": page(
     '<a href="https://github.com/masumi-network/Citadel/issues/228">history</a><a href="/#start">top</a>',
   ),
+  "architecture/memory.html": page("<h1>Memory</h1>"),
+  "architecture/capture.html": page("<h1>Capture</h1>"),
+  "architecture/self-hosting.html": page("<h1>Self-hosting</h1>"),
   "use-cases.html": page('<h2 id="fit">Fit</h2>'),
   "login.html": page("<h1>Sign in is unavailable</h1>"),
   "theme.js": "",
@@ -54,8 +57,8 @@ describe("Pages export guard", () => {
   });
 
   it.each([
-    ["a contact form", { "info.html": page('<form method="post" action="/contact"></form>') }],
-    ["a mailto route", { "info.html": page('<a href="mailto:hello@example.test">mail</a>') }],
+    ["a contact form", { "architecture.html": page('<form method="post" action="/contact"></form>') }],
+    ["a mailto route", { "architecture.html": page('<a href="mailto:hello@example.test">mail</a>') }],
     ["a sign-in field", { "login.html": page('<input type="password" name="accessKey">') }],
     ["a form on any other page", { "index.html": page('<textarea name="message"></textarea>') }],
   ])("rejects %s", (_name, files) => {
@@ -68,7 +71,7 @@ describe("Pages export guard", () => {
   it.each([
     ["login", "login.html", "Sign in at citadel.utxo.ag"],
     ["landing", "index.html", "Part of the Masumi Network"],
-    ["info", "info.html", "Based in Zug"],
+    ["architecture", "architecture.html", "Based in Zug"],
     ["use-cases", "use-cases.html", "Mail team@utxo.ag"],
   ])("rejects former tenant identity on the %s page", (_name, file, text) => {
     write({ [file]: page(text) });
@@ -88,7 +91,7 @@ describe("Pages export guard", () => {
   it.each(["/app", "/next/app", "/admin/session", "/api/state"])(
     "rejects a link to %s, which this site does not host",
     (href) => {
-      write({ "info.html": page(`<a href="${href}">open</a>`) });
+      write({ "architecture.html": page(`<a href="${href}">open</a>`) });
       const { code, output } = run();
       expect(code).toBe(1);
       expect(output).toContain("link to a service this site does not host: " + href);
@@ -139,7 +142,7 @@ describe("Pages export guard", () => {
   it.each(["/contact", "/contact#form", "/contact.html"])(
     "rejects a link to %s even when a contact page was left in the export",
     (href) => {
-      write({ "contact.html": page("<h1>Contact</h1>"), "info.html": page(`<a href="${href}">contact</a>`) });
+      write({ "contact.html": page("<h1>Contact</h1>"), "architecture.html": page(`<a href="${href}">contact</a>`) });
       const { code, output } = run();
       expect(code).toBe(1);
       expect(output).toContain("link to a service this site does not host: " + href);
@@ -147,10 +150,10 @@ describe("Pages export guard", () => {
   );
 
   it("rejects a dead /contact link when the page is absent", () => {
-    write({ "info.html": page('<a href="/contact">contact</a>') });
+    write({ "architecture.html": page('<a href="/contact">contact</a>') });
     const { code, output } = run();
     expect(code).toBe(1);
-    expect(output).toContain("info.html: link to a service this site does not host: /contact");
+    expect(output).toContain("architecture.html: link to a service this site does not host: /contact");
   });
 
   it("rejects an export missing a required page", () => {
@@ -158,6 +161,27 @@ describe("Pages export guard", () => {
     const { code, output } = run();
     expect(code).toBe(1);
     expect(output).toContain("login.html: page is missing");
+  });
+
+  it("rejects an export missing an architecture page", () => {
+    rmSync(join(dir, "architecture/memory.html"));
+    const { code, output } = run();
+    expect(code).toBe(1);
+    expect(output).toContain("architecture/memory.html: page is missing");
+  });
+
+  it("rejects the removed Status page", () => {
+    write({ "info.html": page("<h1>Status</h1>") });
+    const { code, output } = run();
+    expect(code).toBe(1);
+    expect(output).toContain("removed Status page remains");
+  });
+
+  it.each(["/info", "/info.html"])("rejects a link to the removed Status route %s", (href) => {
+    write({ "architecture.html": page(`<a href="${href}">Status</a>`) });
+    const { code, output } = run();
+    expect(code).toBe(1);
+    expect(output).toContain("link to removed Status route: " + href);
   });
 
   it("fails when there is no export at all", () => {

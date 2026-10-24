@@ -21,9 +21,9 @@ const GRID = [
 /* Row 2 and 3, columns 2 and 4: the four windows the CLI and favicon blink. */
 const WINDOWS = new Set([16, 18, 23, 25]);
 
-export function Mark({ className = "size-[22px] gap-px" }: { className?: string }) {
+export function Mark({ className = "size-[22px] gap-px", animated = false }: { className?: string; animated?: boolean }) {
   return (
-    <span className={`grid shrink-0 grid-cols-7 grid-rows-7 ${className}`} aria-hidden="true">
+    <span className={`grid shrink-0 grid-cols-7 grid-rows-7 ${animated ? "product-mark" : ""} ${className}`} aria-hidden="true">
       {GRID.split("").map((cell, i) => (
         <i key={i} className={cell !== "1" ? undefined : WINDOWS.has(i) ? "bg-accent" : "bg-ink"} />
       ))}

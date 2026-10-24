@@ -59,11 +59,14 @@ if (topLevel.some((name) => name === "app" || name === "app.html")) {
 if (topLevel.some((name) => name === "contact" || name === "contact.html")) {
   problems.push("contact page remains in the public export: Pages has no contact backend");
 }
+if (topLevel.some((name) => name === "info" || name === "info.html")) {
+  problems.push("removed Status page remains in the public export");
+}
 
 // Pages has no backend. A control or link for one would collect or send input
 // into nothing, so none may exist on any page.
 const NO_BACKEND = /<(?:form|input|textarea)\b|mailto:/i;
-// Names and hosts of the previous operator. The /info page may link two
+// Names and hosts of the previous operator. An architecture page may link two
 // upstream issues as history; any other masumi-network URL is an identity leak.
 const FORMER_IDENTITY = /utxo AG|utxo\.ag|nmkr\.io|Masumi Network|Sokosumi Network|\bZug\b/i;
 const FORMER_ORG_LINK = /github\.com\/(?:masumi-network|utxo-ag)\/[^"]*/gi;
@@ -73,8 +76,17 @@ const HISTORICAL_LINKS = new Set([
 ]);
 // Services served by FastAPI or a node, never by the Pages site.
 const NODE_ONLY = /^\/(?:app|next|admin|api|readyz|healthz|contact(?:\.html)?)(?:\/|$)/;
+const REMOVED_STATUS = /^\/info(?:\.html)?(?:\/|$)/;
 
-const REQUIRED_PAGES = ["index.html", "info.html", "use-cases.html", "login.html"];
+const REQUIRED_PAGES = [
+  "index.html",
+  "architecture.html",
+  "architecture/memory.html",
+  "architecture/capture.html",
+  "architecture/self-hosting.html",
+  "use-cases.html",
+  "login.html",
+];
 for (const page of REQUIRED_PAGES) {
   if (!(await exists(join(out, page)))) problems.push(page + ": page is missing from the export");
 }
@@ -116,6 +128,10 @@ for (const file of htmlFiles) {
   }
   for (const [, ref] of html.matchAll(attr)) {
     const pathname = ref.split(/[?#]/)[0];
+    if (REMOVED_STATUS.test(pathname)) {
+      problems.push(relative + ": link to removed Status route: " + ref);
+      continue;
+    }
     if (NODE_ONLY.test(pathname)) {
       problems.push(relative + ": link to a service this site does not host: " + ref);
       continue;
@@ -128,6 +144,7 @@ for (const file of htmlFiles) {
   }
   // A fragment has to land on an element, in this page or the page it names.
   for (const [, pathname, id] of html.matchAll(anchor)) {
+    if (REMOVED_STATUS.test(pathname)) continue;
     checked += 1;
     const targetFile = pathname === "" ? file : htmlFile(pathname);
     const known = targetFile ? ids.get(targetFile) : undefined;

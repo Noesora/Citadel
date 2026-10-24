@@ -1,368 +1,95 @@
 import Head from "next/head";
 
-import { HeroBand } from "@/components/hero-band";
-import { PipelineDiagram } from "@/components/pipeline-diagram";
-import { WithSectionRail, type Section } from "@/components/section-index";
-import { SiteFooter } from "@/components/site-footer";
-import { ISSUES_HREF, PUBLIC_PAGES } from "@/lib/site";
-import {
-  BAND,
-  BAND_IN,
-  BTN,
-  BTN_PRIMARY,
-  Band,
-  CARD_P,
-  CODE,
-  CTA,
-  Chip,
-  DEEP_B,
-  DEEP_H4,
-  DEEP_P,
-  DEEP_UL,
-  DeepLi,
-  EYEBROW,
-  GoDeeper,
-  H1,
-  HAIRLINE_ROW,
-  HERO_P,
-  LEDE,
-  ROW_H3,
-  SecHead,
-} from "@/components/ui";
+import { MemoryScene } from "@/components/memory-scene";
+import { TopNav } from "@/components/top-nav";
+import { ISSUES_HREF } from "@/lib/site";
 
-/* The front door.
- *
- * A port of kb/static/landing.html, copy for copy. Full-bleed bands, each
- * holding a 1200px measure, alternating white and grey with one accent-tinted
- * band at the fork. Every band colour is a token, so dark mode inverts with the
- * rest of the ramp.
- */
-const SECTIONS: Section[] = [
-  { id: "what", label: "What it is" },
-  { id: "how", label: "How it works" },
-  { id: "next", label: "Two ways in" },
-  { id: "start", label: "Get started" },
-];
-
-const ROLLING_WORDS = ["decisions.", "dead ends.", "reasons.", "sessions.", "context."];
-
-/* Static repo facts. Live numbers stay on /info, deliberately: a tile that can
-   go stale on the front door is worse than one that is dated on a report. */
-const TILE_N =
-  "font-mono text-[26px] font-medium leading-[1.1] tracking-[-.02em] tabular-nums text-ink";
-const TILE_K = "mt-2 text-[12.5px] leading-[1.4] text-ink-2";
-
-const CMD =
-  "my-4 overflow-x-auto whitespace-nowrap border border-border bg-surface px-4 py-3.5 font-mono text-[13.5px] text-ink";
-const END_LINK =
-  "border-b border-border-2 text-ink-2 no-underline hover:border-accent hover:text-accent-ink";
+const WORDS = ["remembers.", "learns.", "recalls.", "remembers."];
 
 export default function Home() {
   return (
-    <>
+    <div className="product-site">
       <Head>
-        <title>Citadel</title>
-        <meta
-          name="description"
-          content="Citadel is shared, governed memory for your team and its AI agents. Your work flows in automatically, no other seat can read your Node, and Central is the org's curated memory."
-        />
+        <title>Citadel | Memory for your team and its agents</title>
+        <meta name="description" content="Shared company knowledge, private working memory, and useful session traces shared by choice. Citadel keeps context available to your team and its coding agents." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
+      <a className="product-skip" href="#main">Skip to content</a>
+      <TopNav current="/" />
+      <main id="main">
+        <section className="product-hero product-measure" aria-labelledby="hero-title">
+          <div className="product-pitch">
+            <p className="product-eyebrow">Memory for teams and their agents</p>
+            <h1 id="hero-title" aria-label="Your team learns. Citadel remembers.">
+              <span className="heading-lead" aria-hidden="true">Your team learns.</span>
+              <span className="headline-row" aria-hidden="true">Citadel <span className="word-window"><span className="word-track">{WORDS.map((word, i) => <span key={i}>{word}</span>)}</span></span></span>
+            </h1>
+            <p className="product-lede">Your agent should know what your team already learned. Citadel brings company knowledge and private working memory into the same conversation.</p>
+            <div className="product-cta"><a className="product-primary" href="#central">Explore the memory</a><a href="/architecture">Explore the architecture <span aria-hidden="true">↗</span></a></div>
+            <p className="product-hero-hint">Move through the scene. Pick up a card. See where context goes.</p>
+          </div>
+          <MemoryScene />
+        </section>
 
-      <HeroBand current="/" sections={SECTIONS}>
-        <p className={EYEBROW}>The organization vault</p>
-        <h1 className={`${H1} max-w-[15ch]`}>
-          Citadel remembers your{" "}
-          <span className="roll">
-            <span className="roll-track">
-              {ROLLING_WORDS.map((word) => (
-                <span key={word} className="grad">
-                  {word}
-                </span>
-              ))}
-              {/* A sixth span repeating the first, so the wrap from the last
-                  word back to the first rolls instead of cutting. */}
-              <span className="grad" aria-hidden="true">
-                {ROLLING_WORDS[0]}
-              </span>
-            </span>
-          </span>
-        </h1>
-        <p className={`${HERO_P} mb-[30px]`}>
-          Your team already wrote it down, in commits, sessions, docs, and issues. Citadel captures
-          it as it happens and gives you, and the agents beside you, one place to ask.
-        </p>
-        <div className={CTA}>
-          <a className={BTN_PRIMARY} href="#start">
-            Get started
-          </a>
-          <a className={BTN} href="/use-cases">
-            See what teams use it for
-          </a>
-        </div>
-      </HeroBand>
+        <section id="central" className="product-chapter product-measure" aria-labelledby="central-title">
+          <div className="product-chapter-copy">
+            <p className="product-eyebrow">01 / Central</p>
+            <h2 id="central-title">The reason behind the decision.<br /><em>Still within reach.</em></h2>
+            <p>Your team already worked through the trade-offs. Central keeps shared company knowledge available to people and their agents, with references back to the source.</p>
+            <p>Find the earlier decision before starting the discussion again.</p>
+            <a className="product-text-link" href="/architecture/memory#central">Explore shared memory <span aria-hidden="true">↗</span></a>
+            <div className="product-example"><span>Ask your agent</span><p>“Why did we choose this approach?”</p><small>Illustrative question. Inspect the source behind the answer.</small></div>
+          </div>
+          <MemoryScene variant="central" />
+        </section>
 
-      <WithSectionRail>
-      <section className={`${BAND} bg-surface`}>
-        <div className={BAND_IN}>
-          <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
-            <div className="border border-border bg-surface p-5 max-[620px]:p-4">
-              <div className={`${TILE_N} text-[19px] text-accent-ink`}>Apache-2.0</div>
-              <div className={TILE_K}>Open source, self-hosted</div>
-            </div>
-            <div className="border border-border bg-surface p-5 max-[620px]:p-4">
-              <div className={`${TILE_N} text-[19px]`}>Seat + Node</div>
-              <div className={TILE_K}>Per agent. Central stays in sync</div>
-            </div>
-            <div className="border border-border bg-surface p-5 max-[620px]:p-4">
-              <div className={TILE_N}>24</div>
-              <div className={TILE_K}>MCP tools for agents</div>
-            </div>
-            <div className="border border-border bg-surface p-5 max-[620px]:p-4">
-              <div className={`${TILE_N} text-[19px]`}>~$23–$58/mo</div>
-              <div className={TILE_K}>Self-host; mostly RAM, not a fixed bill</div>
-            </div>
+        <section id="nodes" className="product-chapter product-chapter--reverse product-measure" aria-labelledby="nodes-title">
+          <div className="product-chapter-copy">
+            <p className="product-eyebrow">02 / Your Node</p>
+            <h2 id="nodes-title">Your work in progress.<br /><em>Your own memory.</em></h2>
+            <p>Every team member has a private Node. Their working context stays separate from other members' Nodes, while their agents can use the context they are allowed to read.</p>
+            <p>Keep the unfinished thought, the local investigation, and the detail that only matters to your next task.</p>
+            <a className="product-text-link" href="/architecture/memory#nodes">Explore the memory boundary <span aria-hidden="true">↗</span></a>
           </div>
-          <p className="mt-[18px] text-[13px] leading-[1.6] text-ink-3">
-            This page is served by the system it describes. Live numbers, releases, and the roadmap
-            are on the <a href="/info">status page</a>.
-          </p>
-          {/* Cost range: 2026-08-17 24h ~$23 and 2026-08-14 7-day ~$58.
-              Search 25 s and 269 ms stay in docs/performance.md, not this note. */}
-          <p className="mt-[18px] text-[13px] leading-[1.6] text-ink-3">
-            Self-host cost is mostly RAM: 24h 2026-08-17 about $23; 7-day 2026-08-14
-            about $58. Not a ceiling; method in the{" "}
-            <a href="https://github.com/Noesora/Citadel/tree/main/scripts/bench">
-              bench harness
-            </a>
-            .
-          </p>
-        </div>
-      </section>
+          <MemoryScene variant="node" />
+        </section>
 
-      <Band tone="grey" id="what">
-        <SecHead kicker="01 · What it is" title="Memory with a boundary" />
-        <p className={LEDE}>
-          Most team knowledge tools ask you to file things. Citadel captures the work you were doing
-          anyway, then keeps the personal and the shared strictly apart.
-        </p>
+        <section id="traces" className="product-chapter product-measure" aria-labelledby="traces-title">
+          <div className="product-chapter-copy">
+            <p className="product-eyebrow">03 / Shared Session Traces</p>
+            <h2 id="traces-title">Someone already tried it.<br /><em>Start from there.</em></h2>
+            <p>A useful session is more than its final answer. Share a distilled record of the task, the approaches tried, and the dead ends.</p>
+            <p>Other members and their agents can consult that prior work. You choose what to volunteer. A shared trace stays separate from curated Central knowledge.</p>
+            <a className="product-text-link" href="/architecture/memory#traces">Explore deliberate sharing <span aria-hidden="true">↗</span></a>
+            <div className="product-example"><span>Try the boundary</span><p>Drag a session card from your drawer to the tray.</p><small>The example copy is shared. Your private context remains.</small></div>
+          </div>
+          <MemoryScene variant="traces" />
+        </section>
 
-        <PipelineDiagram />
+        <section id="hooks" className="product-chapter product-chapter--reverse product-measure" aria-labelledby="hooks-title">
+          <div className="product-chapter-copy">
+            <p className="product-eyebrow">04 / Capture hooks</p>
+            <h2 id="hooks-title">Do the work.<br /><em>Keep the context.</em></h2>
+            <p>Supported session hooks can capture a summary when a session ends. A git hook can capture push metadata from approved repositories.</p>
+            <p>That context goes into your private Node. Capturing it and sharing it with the team are separate actions.</p>
+            <a className="product-text-link" href="/architecture/capture">Explore capture hooks <span aria-hidden="true">↗</span></a>
+          </div>
+          <MemoryScene variant="hooks" />
+        </section>
 
-        <div className="grid grid-cols-2 gap-px bg-border max-[620px]:grid-cols-1">
-          <div className="bg-surface px-6 py-5 max-[620px]:px-4">
-            <p className="mb-1.5 font-mono text-[10.5px] font-semibold uppercase tracking-[.14em] text-accent-ink">
-              Your Node
-            </p>
-            <h3 className="m-0 mb-2 text-base font-semibold">Personal by default</h3>
-            <p className={CARD_P}>
-              Everything you capture lands here. No other seat can read it, and no job promotes it
-              into shared memory. Sharing is an act, not a setting.
-            </p>
-          </div>
-          <div className="bg-surface px-6 py-5 max-[620px]:px-4">
-            <p className="mb-1.5 font-mono text-[10.5px] font-semibold uppercase tracking-[.14em] text-ink-3">
-              Central
-            </p>
-            <h3 className="m-0 mb-2 text-base font-semibold">Curated, not a dump</h3>
-            <p className={CARD_P}>
-              The org&apos;s shared memory only holds what a person promoted into it, so it stays
-              worth trusting instead of everyone&apos;s scratch notes.
-            </p>
-          </div>
-          <div className="bg-surface px-6 py-4 max-[620px]:px-4">
-            <h3 className="m-0 mb-1 text-[15px] font-semibold">Agents search as you</h3>
-            <p className={CARD_P}>
-              Claude Code, Cursor, or your own MCP client, same seat, same read isolation.
-            </p>
-          </div>
-          <div className="bg-surface px-6 py-4 max-[620px]:px-4">
-            <h3 className="m-0 mb-1 text-[15px] font-semibold">Every answer cites a source</h3>
-            <p className={CARD_P}>
-              A commit, an issue, a session. Check the claim instead of taking the vault&apos;s word.
-            </p>
-          </div>
-        </div>
-
-        <GoDeeper title="The access and data model in one pass">
-          <p className={DEEP_P}>
-            Citadel is a FastAPI service over a retrieval layer, but the moat is the governance
-            around it.
-          </p>
-          <h4 className={DEEP_H4}>Read scope</h4>
-          <ul className={DEEP_UL}>
-            <DeepLi>
-              A caller sees their own <b className={DEEP_B}>Node</b>,{" "}
-              <b className={DEEP_B}>Central</b>, and non-seat datasets, resolved by a four-pass
-              cross-dataset visibility algorithm.
-            </DeepLi>
-            <DeepLi>
-              <b className={DEEP_B}>Seat presence is universal</b> (every seat is a hub with a slug
-              and counts), but content is caller-scoped. Foreign-seat drill-down returns{" "}
-              <b className={DEEP_B}>404, not 403</b>, so there is no existence oracle.
-            </DeepLi>
-            <DeepLi>Admin and env tokens bypass for operations; every call is audited.</DeepLi>
-          </ul>
-          <h4 className={DEEP_H4}>Write scope</h4>
-          <ul className={DEEP_UL}>
-            <DeepLi>
-              All seat-scoped writes land on the owning Node. Untagged writes to Central are
-              rejected (403).
-            </DeepLi>
-            <DeepLi>
-              Every write path, HTTP, MCP, hooks, feedback, runs the seat write-policy guard and a
-              secret scan.
-            </DeepLi>
-          </ul>
-          <h4 className={DEEP_H4}>Promotion to Central</h4>
-          <ul className={DEEP_UL}>
-            <DeepLi>
-              The <b className={DEEP_B}>Promotion Agent</b> cross-references GitHub org repos and
-              Central, auto-promotes known work after secret-scan and LLM review, and queues
-              new-project candidates for human approval (dashboard, MCP, or{" "}
-              <code className={CODE}>citadel promotion</code>).
-            </DeepLi>
-          </ul>
-        </GoDeeper>
-      </Band>
-
-      <Band tone="white" id="how">
-        <SecHead kicker="02 · How it works" title="Three moving parts" />
-        <p className={LEDE}>
-          You install once. After that the interesting part is what you do not have to do.
-        </p>
-        <div>
-          <div className={HAIRLINE_ROW}>
-            <div className="flex pt-[3px]">
-              <Chip tone="step">Capture</Chip>
-            </div>
-            <div>
-              <h3 className={ROW_H3}>It runs without you.</h3>
-              <p className={CARD_P}>
-                A session hook and a git pre-push hook feed your Node while you work, and the
-                evolve pass syncs the org&apos;s GitHub and Linear. Nothing to file, nothing to
-                remember to save.
-              </p>
-            </div>
-          </div>
-          <div className={HAIRLINE_ROW}>
-            <div className="flex pt-[3px]">
-              <Chip tone="step">Search</Chip>
-            </div>
-            <div>
-              <h3 className={ROW_H3}>One question, both memories.</h3>
-              <p className={CARD_P}>
-                <code className={CODE}>citadel search</code> and the MCP tools read your Node and
-                Central together, and tell you which one answered.
-              </p>
-            </div>
-          </div>
-          <div className={HAIRLINE_ROW}>
-            <div className="flex pt-[3px]">
-              <Chip tone="step">Promote</Chip>
-            </div>
-            <div>
-              <h3 className={ROW_H3}>Sharing stays deliberate.</h3>
-              <p className={CARD_P}>
-                When something is worth the whole org knowing, you promote it. Until then it stays
-                on your seat, out of reach of the rest of the org and of their agents.
-              </p>
-            </div>
-          </div>
-        </div>
-      </Band>
-
-      <Band tone="tint" id="next">
-        <SecHead kicker="03 · Where to go next" title="Two ways in" />
-        <div className="grid grid-cols-2 gap-3.5 max-[620px]:grid-cols-1">
-          {/* The left door is the one we want taken. */}
-          <div className="flex flex-col border border-accent bg-surface px-7 py-[26px] max-[620px]:px-4 max-[620px]:py-5">
-            <h3 className="mb-2 text-xl font-medium tracking-[-.02em]">Use it</h3>
-            <p className="mb-[22px] text-[14.5px] leading-[1.6] text-ink-2">
-              {PUBLIC_PAGES
-                ? "Run the source on your own machine. No Noesora-hosted node or seat token is available."
-                : "Install the CLI for a node you operate. Give each agent a seat token from that node and keep its memory on your own infrastructure."}
-            </p>
-            <div className={`${CTA} mb-0 mt-auto`}>
-              <a className={BTN_PRIMARY} href="#start">
-                Get started
-              </a>
-              <a className={BTN} href="/use-cases">
-                Use cases
-              </a>
-            </div>
-          </div>
-          <div className="flex flex-col border border-border-2 bg-surface px-7 py-[26px] max-[620px]:px-4 max-[620px]:py-5">
-            <h3 className="mb-2 text-xl font-medium tracking-[-.02em]">Build on it</h3>
-            <p className="mb-[22px] text-[14.5px] leading-[1.6] text-ink-2">
-              Citadel is open source under Apache-2.0. Read the code, run it yourself, or adapt the
-              draft work-package outline for an EU project.
-            </p>
-            <div className={`${CTA} mb-0 mt-auto`}>
-              <a className={BTN} href="/use-cases#fit">
-                Consortium outline
-              </a>
-              <a className={BTN} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
-                {PUBLIC_PAGES ? "Open an issue" : "Contact"}
-              </a>
-            </div>
-          </div>
-        </div>
-      </Band>
-
-      <Band tone="grey" id="start">
-        <SecHead kicker="04 · Get started" title="Local source checkout" />
-        <p className={LEDE}>
-          {PUBLIC_PAGES
-            ? "This static site has no live node or seat token. Clone this fork to inspect the CLI; self-hosting needs your own services."
-            : "Use this source with a node you operate. That node must issue its own seat tokens. No Noesora package is published."}
-        </p>
-        <div className={CMD}>
-          <span className="select-none text-accent-ink">$</span> git clone https://github.com/Noesora/Citadel.git
-        </div>
-        <div className={CMD}>
-          <span className="select-none text-accent-ink">$</span> {"cd Citadel && uv sync --locked --dev"}
-        </div>
-        <div className={CMD}>
-          <span className="select-none text-accent-ink">$</span> uv run citadel --help
-        </div>
-        <div className="mt-[26px] flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-[13.5px] text-ink-3">
-          <span>
-            {PUBLIC_PAGES ? "Questions or bugs?" : "Need a token?"}{" "}
-            <a className={END_LINK} href={PUBLIC_PAGES ? ISSUES_HREF : "/contact"}>
-              {PUBLIC_PAGES ? "Open an issue" : "Contact the operator"}
-            </a>
-            .
-          </span>
-          <span>
-            Already have a seat?{" "}
-            {PUBLIC_PAGES ? (
-              "Sign in is unavailable on this site."
-            ) : (
-              <a className={END_LINK} href="/login">
-                Sign in
-              </a>
-            )}
-            {PUBLIC_PAGES ? null : "."}
-          </span>
-          <span>
-            {PUBLIC_PAGES ? "Read the published report on the " : "Watch the node on the "}
-            <a className={END_LINK} href="/info">
-              {PUBLIC_PAGES ? "status report" : "live status page"}
-            </a>
-            .
-          </span>
-          <span>
-            Read the{" "}
-            <a className={END_LINK} href="https://github.com/Noesora/Citadel">
-              source on GitHub
-            </a>
-            .
-          </span>
-        </div>
-      </Band>
-      <SiteFooter />
-      </WithSectionRail>
-    </>
+        <section id="start" className="product-close product-measure" aria-labelledby="start-title">
+          <p className="product-eyebrow">Keep the context behind the work</p>
+          <h2 id="start-title">Give the next task<br /><em>a better starting point.</em></h2>
+          <p>Inspect the source. Explore the architecture. Run Citadel on infrastructure you operate.</p>
+          <div className="product-cta"><a className="product-primary" href="/architecture/self-hosting">Start with self-hosting</a><a href="https://github.com/Noesora/Citadel">Read the source <span aria-hidden="true">↗</span></a></div>
+          <p className="product-availability">This site offers no hosted node or seat token.</p>
+        </section>
+      </main>
+      <footer className="product-footer product-measure">
+        <a className="product-footer-wordmark" href="/">Citadel</a>
+        <div><a href="/architecture">Architecture</a><a href="/architecture/memory">Memory &amp; sharing</a><a href="/architecture/capture">Capture hooks</a><a href="/architecture/self-hosting">Self-hosting</a><a href={ISSUES_HREF}>Questions &amp; issues</a></div>
+        <p>Open source. Maintained by <a href="https://github.com/Sarthib7">@Sarthib7</a>.</p>
+      </footer>
+    </div>
   );
 }

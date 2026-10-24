@@ -1204,7 +1204,10 @@ def test_no_path_relaxes_style_src() -> None:
         "/",
         "/login",
         "/app",
-        "/info",
+        "/architecture",
+        "/architecture/memory",
+        "/architecture/capture",
+        "/architecture/self-hosting",
         "/use-cases",
         "/contact",
         "/healthz",
@@ -1425,8 +1428,11 @@ def test_public_pages_share_one_top_nav() -> None:
 
     for path, page in pages.items():
         assert 'class="topnav"' in page, path
-        for link in ("/", "/info", "/use-cases", "/contact", "/login"):
+        public_model_link = "/architecture" if path == "/login" else "/info"
+        for link in ("/", public_model_link, "/use-cases", "/contact", "/login"):
             assert f'<a href="{link}"' in page, f"{path} is missing the {link} nav link"
+        if path == "/login":
+            assert '<a href="/info"' not in page
         assert "Sign in</a>" in page, path
         # The lockup lives in the nav now, so the page header must not repeat it.
         assert 'class="brandrow"' not in page, path
@@ -1477,7 +1483,16 @@ def test_every_internal_link_on_the_public_pages_resolves() -> None:
     """
     client = TestClient(app, base_url="https://testserver")
 
-    pages = ("/", "/info", "/use-cases", "/contact", "/login")
+    pages = (
+        "/",
+        "/architecture",
+        "/architecture/memory",
+        "/architecture/capture",
+        "/architecture/self-hosting",
+        "/use-cases",
+        "/contact",
+        "/login",
+    )
     bodies = {path: client.get(path).text for path in pages}
     ids = {
         path: set(re.findall(r'id="([^"]+)"', body)) for path, body in bodies.items()
@@ -1751,7 +1766,17 @@ def test_no_vendor_name_on_user_facing_surfaces() -> None:
 
     pages = {
         path: client.get(path).text
-        for path in ("/", "/info", "/use-cases", "/contact", "/login", "/app")
+        for path in (
+            "/",
+            "/architecture",
+            "/architecture/memory",
+            "/architecture/capture",
+            "/architecture/self-hosting",
+            "/use-cases",
+            "/contact",
+            "/login",
+            "/app",
+        )
     }
     description = client.get("/openapi.json").json()["info"]["description"]
 
@@ -7258,7 +7283,8 @@ def test_robots_txt_keeps_crawlers_off_the_api(tmp_path: Any) -> None:
     assert response.headers["content-type"].startswith("text/plain")
     body = response.text
     assert "Disallow: /api/" in body
-    assert "Allow: /info" in body
+    assert "Allow: /architecture" in body
+    assert "Allow: /info" not in body
 
 
 def test_create_seat_provisions_the_cognee_dataset_row(tmp_path: Any) -> None:

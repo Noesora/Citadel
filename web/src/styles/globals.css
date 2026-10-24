@@ -15,15 +15,14 @@
 @custom-variant dark (&:where(:root[data-theme="dark"], :root[data-theme="dark"] *));
 
 :root {
-  /* Noesora paper and ink: a warm-grey ground, a brighter paper for raised
-     surfaces, a mist-tinted second surface, near-black ink. Provisional: the
-     brand is not locked, so the values live here and nowhere else. */
-  --ground: #eaedea;
+  /* R2 guide-paper tokens. Light remains the default; dark is an explicit
+     choice applied through the saved `citadel-info-theme` preference. */
+  --ground: #f3f5f4;
   --surface: #f6f7f5;
   --surface-2: #dfe4e1;
   --ink: #0b1013;
   --ink-2: #3f4e54;
-  --ink-3: #4f5d63;
+  --ink-3: #526066;
   --border: rgba(11, 16, 19, 0.18);
   --border-2: rgba(11, 16, 19, 0.32);
 
@@ -54,22 +53,22 @@
   --chrome-h: calc(var(--topnav-h) + var(--sectionnav-h));
 }
 :root[data-theme="light"] {
-  --ground: #eaedea; --surface: #f6f7f5; --surface-2: #dfe4e1;
-  --ink: #0b1013; --ink-2: #3f4e54; --ink-3: #4f5d63;
+  --ground: #f3f5f4; --surface: #f6f7f5; --surface-2: #dfe4e1;
+  --ink: #0b1013; --ink-2: #3f4e54; --ink-3: #526066;
   --border: rgba(11,16,19,0.18); --border-2: rgba(11,16,19,0.32);
   --accent: #385fcf; --accent-ink: #2d4fb5; --accent-soft: rgba(56,95,207,0.10);
   --vermilion: #b83a2d;
-  --on-accent: #f6f7f5;
+  --on-accent: #f3f5f4;
   --good: #0b6130; --good-bg: rgba(15,110,51,0.10);
   --warn: #8a3f05; --warn-bg: rgba(154,69,6,0.10);
 }
 :root[data-theme="dark"] {
-  --ground: #0b1013; --surface: #11181c; --surface-2: #182126;
-  --ink: #eaedea; --ink-2: rgba(234,237,234,0.68); --ink-3: rgba(234,237,234,0.56);
-  --border: rgba(234,237,234,0.14); --border-2: rgba(234,237,234,0.26);
-  --accent: #6f92ff; --accent-ink: #8fa9ff; --accent-soft: rgba(111,146,255,0.16);
+  --ground: #080b0d; --surface: #12171b; --surface-2: #1b2227;
+  --ink: #f2f4f3; --ink-2: #c4cdd0; --ink-3: #a6b0b3;
+  --border: #293036; --border-2: #465159;
+  --accent: #6f92ff; --accent-ink: #6f92ff; --accent-soft: rgba(111,146,255,0.16);
   --vermilion: #d2503f;
-  --on-accent: #0b1013;
+  --on-accent: #080b0d;
   --good: #4ade80; --good-bg: rgba(74,222,128,0.12);
   --warn: #f59e0b; --warn-bg: rgba(245,158,11,0.12);
 }
@@ -224,19 +223,17 @@
   .hero-glow { opacity: .2; right: clamp(12px, 5vw, 48px); }
 }
 
-/* --- the inverse footer ---------------------------------------------------
-   The closing band is ink on both themes, as on the Noesora landing. Tokens
-   are re-declared on the element rather than every footer utility being
-   overridden, so text-ink-2, bg-surface-2 and the base link colour all resolve
-   to their on-ink values with no extra classes. Dark mode goes a step deeper
-   than the page ground so the band still reads as a band. */
+/* The closing band stays on Noesora's obsidian palette in either theme. Its
+   local tokens keep utilities and links legible without changing page colors. */
 .site-footer {
-  --surface: #0b1013; --surface-2: #182126;
-  --ink: #eaedea; --ink-2: #c7cfcc; --ink-3: #aab4b0;
-  --border: rgba(234,237,234,0.22); --border-2: rgba(234,237,234,0.32);
-  --accent-ink: #8fa9ff;
+  --ground: #080b0d; --surface: #12171b; --surface-2: #1b2227;
+  --ink: #f2f4f3; --ink-2: #c4cdd0; --ink-3: #a6b0b3;
+  --border: #293036; --border-2: #465159;
+  --accent: #6f92ff; --accent-ink: #6f92ff; --accent-soft: rgba(111,146,255,0.16);
+  --on-accent: #080b0d;
+  --good: #4ade80; --good-bg: rgba(74,222,128,0.12);
+  --warn: #f59e0b; --warn-bg: rgba(245,158,11,0.12);
 }
-:root[data-theme="dark"] .site-footer { --surface: #070b0d; }
 
 /* --- the rotating headline ------------------------------------------------
    A fixed-height, overflow-hidden column of words that slides one line per

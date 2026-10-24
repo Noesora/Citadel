@@ -8,7 +8,7 @@ import { PUBLIC_PAGES } from "@/lib/site";
    left out of the nav there rather than linked as a 404. */
 const LINKS: Array<{ href: string; label: string }> = [
   { href: "/", label: "Home" },
-  { href: "/info", label: "Status" },
+  { href: "/architecture", label: "Architecture" },
   { href: "/use-cases", label: "Use cases" },
   ...(PUBLIC_PAGES ? [] : [{ href: "/contact", label: "Contact" }]),
 ];
@@ -71,7 +71,7 @@ export function TopNav({
           aria-label="Citadel home"
           className="mr-auto flex items-center gap-2.5 text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent min-[1000px]:mr-0"
         >
-          <Mark />
+          <Mark animated />
           <span className="font-display text-[22px] leading-[1.1] tracking-[-.02em] max-[660px]:hidden">
             Citadel
           </span>
@@ -85,8 +85,8 @@ export function TopNav({
             <a
               key={link.href}
               href={link.href}
-              aria-current={link.href === current ? "page" : undefined}
-              className={`${LINK} ${link.href === current ? LINK_CURRENT : LINK_IDLE}`}
+              aria-current={(link.href === current || (link.href === "/architecture" && current?.startsWith("/architecture/"))) ? "page" : undefined}
+              className={`${LINK} ${(link.href === current || (link.href === "/architecture" && current?.startsWith("/architecture/"))) ? LINK_CURRENT : LINK_IDLE}`}
             >
               {link.label}
             </a>
