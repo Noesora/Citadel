@@ -1602,7 +1602,7 @@ LOGIN_HTML = """<!doctype html>
         </a>
         <div class="topnav-links">
           <a href="/">Home</a>
-          <a href="/info">Status</a>
+          <a href="/architecture">Architecture</a>
           <a href="/use-cases">Use cases</a>
           <a href="/contact">Contact</a>
           <a href="/login" aria-current="page">Sign in</a>
@@ -4477,7 +4477,29 @@ async def next_theme_js() -> FileResponse:
 #
 # Registered last, because `{page}` would otherwise swallow /next/app: FastAPI
 # matches routes in declaration order, and a path parameter matches anything.
-WEBUI_PAGES = frozenset({"info", "use-cases", "contact", "login", "presentation"})
+ARCHITECTURE_PAGES = {
+    "memory": "architecture/memory",
+    "capture": "architecture/capture",
+    "self-hosting": "architecture/self-hosting",
+}
+
+
+@app.get("/architecture", include_in_schema=False)
+@app.get("/next/architecture", include_in_schema=False)
+async def architecture_page() -> Response:
+    return webui_page("architecture")
+
+
+@app.get("/architecture/{page}", include_in_schema=False)
+@app.get("/next/architecture/{page}", include_in_schema=False)
+async def architecture_subpage(page: str) -> Response:
+    export = ARCHITECTURE_PAGES.get(page)
+    if export is None:
+        raise HTTPException(status_code=404, detail="Not Found")
+    return webui_page(export)
+
+
+WEBUI_PAGES = frozenset({"use-cases", "contact", "login", "presentation"})
 
 
 @app.get("/next/{page}", include_in_schema=False)
@@ -4509,8 +4531,8 @@ async def login() -> Response:
 async def robots_txt() -> Response:
     """Keep crawlers on the marketing pages and off everything else.
 
-    This node serves a public site (/, /info, /use-cases) from the same origin
-    as the app and the whole API, so without this a crawler is free to walk
+    This node serves a public site (/, /architecture, /use-cases) from the same
+    origin as the app and the whole API, so without this a crawler is free to walk
     /app, /next and /api. Those all require auth and answer 401, but a 401 is
     still a request that reaches the event loop, and #105 is about how little
     it takes to saturate that.
@@ -4521,7 +4543,7 @@ async def robots_txt() -> Response:
         [
             "User-agent: *",
             "Allow: /$",
-            "Allow: /info",
+            "Allow: /architecture",
             "Allow: /use-cases",
             "Disallow: /api/",
             "Disallow: /app",
@@ -4533,15 +4555,6 @@ async def robots_txt() -> Response:
         ]
     )
     return Response(content=body, media_type="text/plain")
-
-
-@app.get("/info", include_in_schema=False)
-async def info_page() -> Response:
-    # Public "State of the Vault" report. Static shell; live tiles hydrate from
-    # /api/state so the numbers stay current without redeploying the page.
-    if (WEBUI_DIR / "info.html").is_file():
-        return webui_page("info")
-    return FileResponse(STATIC_DIR / "info.html")
 
 
 @app.get("/use-cases", include_in_schema=False)

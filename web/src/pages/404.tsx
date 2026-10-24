@@ -40,9 +40,9 @@ export default function NotFound() {
               </a>
               <a
                 className="inline-flex items-center justify-center border border-border-2 bg-surface px-5 py-[11px] text-sm font-medium text-ink no-underline transition-[border-color,color] duration-150 hover:border-ink-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                href="/info"
+                href="/architecture"
               >
-                Status page
+                Architecture
               </a>
             </div>
           </header>

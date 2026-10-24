@@ -50,7 +50,7 @@ export default function Contact() {
             Tell us where your knowledge currently lives and what you keep re-answering.
           </HeroFact>
           <HeroFact kicker="Question">
-            Ask anything the <a href="/info">live status</a> or the <a href={SOURCE_HREF}>source</a>{" "}
+            Ask anything the <a href="/architecture">architecture</a> or the <a href={SOURCE_HREF}>source</a>{" "}
             did not answer.
           </HeroFact>
         </dl>
