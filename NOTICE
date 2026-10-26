@@ -34,3 +34,12 @@ The build changes only Cognee's cryptography upper bound from `<50` to `<51` so
 the image can use cryptography 50.0.0. The build verifies the source SHA-256 and
 retains Cognee's LICENSE and NOTICE.md in the resulting wheel. The build script
 and pinned source record are in `scripts/build_secure_cognee.py`.
+
+The landing illustration includes MIT-licensed material:
+
+    Copyright (c) 2026 Ryan
+    MIT License
+
+The complete copyright and permission notice is in
+web/src/components/ANATOMY-LICENSE.txt and web/public/ANATOMY-LICENSE.txt.
+Static exports include it at /ANATOMY-LICENSE.txt.
