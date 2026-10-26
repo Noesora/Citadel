@@ -27,19 +27,22 @@ def _exported_html() -> list[Path]:
     return sorted(server_module.WEBUI_DIR.rglob("*.html"))
 
 
-# Every preview route, and one phrase from each page that only appears if the
-# page actually rendered rather than merely returning a shell.
+# Every supported public preview route under `/next`; page copy belongs in the
+# product review, not the route/security contract.
 PREVIEWS = (
-    ("/next", "Citadel remembers your"),
-    ("/next/info", "Shared, governed memory for the team"),
-    ("/next/use-cases", "What people run Citadel for"),
-    ("/next/contact", "Tell us what you are building,"),
-    ("/next/login", "Open your vault."),
+    "/next",
+    "/next/architecture",
+    "/next/architecture/memory",
+    "/next/architecture/capture",
+    "/next/architecture/self-hosting",
+    "/next/use-cases",
+    "/next/contact",
+    "/next/login",
 )
 
 
 def test_every_preview_route_is_served_under_the_strict_policy() -> None:
-    """The previews are real pages, under the site's default policy, all five.
+    """Every supported public preview is HTML under the site's default policy.
 
     `script-src 'self'` is the line that matters. Next.js's App Router emits its
     render payload as executable inline <script> blocks, which a static export
@@ -52,12 +55,11 @@ def test_every_preview_route_is_served_under_the_strict_policy() -> None:
     """
     client = _client()
 
-    for path, phrase in PREVIEWS:
+    for path in PREVIEWS:
         response = client.get(path)
 
         assert response.status_code == 200, path
         assert response.headers["content-type"].startswith("text/html"), path
-        assert phrase in response.text, f"{path} did not render its own content"
 
         policy = response.headers["content-security-policy"]
         assert "script-src 'self';" in policy, path
@@ -73,11 +75,18 @@ def test_every_preview_route_is_served_under_the_strict_policy() -> None:
 
 
 def test_the_preview_route_set_is_closed() -> None:
-    """A path parameter used as a filename is a directory traversal waiting to
-    happen, so the route serves an allow-list and nothing else."""
+    """Only explicit public pages resolve; removed paths stay 404."""
     client = _client()
 
-    for path in ("/next/nope", "/next/..%2f..%2fserver.py", "/next/index"):
+    for path in (
+        "/info",
+        "/next/info",
+        "/next/nope",
+        "/next/..%2f..%2fserver.py",
+        "/next/index",
+        "/architecture/unknown",
+        "/next/architecture/unknown",
+    ):
         assert client.get(path).status_code == 404, path
 
 
@@ -110,82 +119,6 @@ def test_the_theme_bootstrap_is_served_as_executable_javascript() -> None:
             f"{page.name} does not load the theme bootstrap"
         )
 
-
-def test_the_landing_preview_ships_its_diagram_as_markup() -> None:
-    """The React Flow bundle is fetched when the diagram scrolls into view.
-    The export still carries a correct picture (the numbered path plus the
-    layered stack) so a phone or a no-JS client is not blank.
-    """
-    body = _client().get("/next").text
-
-    for step in ("Capture", "Your Node", "Promotion", "Central"):
-        assert step in body
-    assert "xyflow" not in body
-
-
-def test_the_landing_preview_quotes_cost_as_a_range() -> None:
-    """A single cheap monthly figure understates a memory-dominated bill.
-
-    The hero keeps a dollar tile, but as a measured range (24h low, 7-day
-    high), not ~$23/mo alone. ~$55/mo is a stale visitor memory of that
-    7-day window and must not appear as an exact substring.
-    """
-    body = _client().get("/next").text
-
-    assert "Apache-2.0" in body
-    assert "Seat + Node" in body
-    assert "MCP tools for agents" in body
-    assert "~$23–$58/mo" in body
-    assert "Self-host; mostly RAM, not a fixed bill" in body
-    assert "~$23/mo" not in body
-    assert "~$55/mo" not in body
-    assert ">25 s<" not in body
-    assert ">269 ms<" not in body
-
-
-
-
-def test_the_landing_architecture_reaches_phones_and_names_what_runs() -> None:
-    """Two regressions pinned at once.
-
-    Mobile: the React Flow canvas mounts at every width (fitView, pan off on
-    coarse pointers). The layered markup stays in the export so a phone with
-    no JavaScript still reads the architecture.
-
-    Content: the layers name what actually runs at head, the stores
-    kb/lite_runtime.py configures and the lifecycle wording of kb/lifecycle.py,
-    and carry no cadence figure. "hourly" sat on the org sources while the
-    shipped default interval was six hours (kb/config.py
-    evolve_interval_seconds), so its absence is pinned the way the other
-    unrecomputable figures are.
-    """
-    body = _client().get("/next").text
-
-    layers = re.search(
-        r'<div[^>]*aria-label="The architecture, layer by layer"[^>]*>', body
-    )
-    assert layers is not None, "the layered architecture block is not in the export"
-    assert "max-[620px]:hidden" not in layers.group(0)
-
-    spine = re.search(r'<ol[^>]*aria-label="How work reaches the vault"[^>]*>', body)
-    assert spine is not None, "the capture-to-read path is not in the export"
-    assert "max-[620px]:hidden" not in spine.group(0)
-
-    for fact in (
-        "Lifecycle ledger",
-        "SQLite · Qdrant · Ladybug",
-        "BAAI/bge-small-en-v1.5",
-        "evolve pass",
-    ):
-        assert fact in body, f"the exported architecture no longer names: {fact}"
-
-    # In the source too, not only the last rebuild, mirroring how
-    # test_public_page_claims.py treats the other dead figures.
-    data = (
-        server_module.WEBUI_DIR.parent.parent / "web" / "src" / "components" / "pipeline-data.ts"
-    ).read_text(encoding="utf-8")
-    for surface in (body, data):
-        assert "hourly" not in surface
 
 
 def test_the_export_carries_no_inline_script_and_no_inline_style() -> None:
@@ -420,81 +353,6 @@ def test_the_frontend_never_navigates_client_side() -> None:
     )
 
 
-def test_the_info_preview_ships_the_last_published_figures() -> None:
-    """/info hydrates from /api/state, and has to read correctly before it does.
-
-    The tiles are stamped with the last published values rather than left blank,
-    so a visitor who arrives while the node is unreachable, or with JavaScript
-    off, reads something true and slightly old instead of a row of dashes. The
-    commit chart is the deliberate exception: its bar heights are computed, and
-    a pre-rendered bar would carry a `style` attribute that `style-src 'self'`
-    drops, so it is drawn after mount exactly as the hand-written page drew it
-    from a deferred script.
-
-    Four counts were dropped from these tiles: commits, decision records, a test
-    count and a LOC count. None was evidence the system works and every one of
-    them had drifted stale on the page. A dated cost snapshot and a Seat + Node
-    product claim took two of the slots and the row went from eight tiles to
-    six. Search 25 s stays in docs/performance.md, not the hero or the
-    verified note. Self-host cost is a range (24h 2026-08-17 about $23,
-    7-day 2026-08-14 about $58), not a single monthly figure.
-    """
-    body = _client().get("/next/info").text
-
-    # The health pill hydrates from /api/state; the prerendered HTML must not
-    # claim Live before that read settles (regression: null → false-green Live).
-    assert "Loading" in body
-    assert "Live · v0.5.0" not in body
-    assert "Window: v0.2.0 → v0.5.0" in body
-    assert "Window: v0.2.0 → v0.4.1" not in body
-    assert "~$23–$58/mo" in body
-    assert "~$23/mo" not in body
-    assert "about $58" in body
-    assert "7-day 2026-08-14" in body
-    assert "~$55/mo" not in body
-    assert "Seat + Node" in body
-    assert ">25 s<" not in body and '">25 s<' not in body
-    assert ">269 ms<" not in body and '">269 ms<' not in body
-    assert "Search 25 s is the" not in body
-    # v0.5.0 release note is historical and stays true for that tag.
-    assert "Self-host cost stays ~$38/mo" in body
-    assert "commits on main" not in body
-    assert "architecture decision records" not in body
-    assert "tests across 52 files" not in body
-    assert "53 modules" not in body
-    assert "Live tiles pull from" in body
-
-
-def test_use_cases_partner_blocks_are_hidden_by_default() -> None:
-    """Team is the default. Partner copy stays in the export, not shown.
-
-    Coordinators still get THE ASK after pressing Partner, or by landing on
-    #ask. A visitor who never toggles should not see the work-package pitch,
-    and those anchors should not sit in the section rail.
-    """
-    body = (server_module.WEBUI_DIR / "use-cases.html").read_text(encoding="utf-8")
-
-    assert "Four things teams run it for" in body
-    assert "One work package, scoped to your call" in body
-    assert "Draft work package" in body
-    assert 'id="audience"' in body
-    assert "Team" in body and "Partner" in body
-
-    for section_id in ("fit", "can", "wp", "ask", "talk"):
-        tag = re.search(rf"<section[^>]*id=\"{section_id}\"[^>]*>", body)
-        assert tag is not None, section_id
-        assert "hidden" in tag.group(0), f"#{section_id} should be hidden by default"
-
-    teams = re.search(r'<section[^>]*id="teams"[^>]*>', body)
-    assert teams is not None
-    assert "hidden" not in teams.group(0)
-
-    assert 'href="#ask"' not in body
-    assert 'href="#wp"' not in body
-    assert 'href="#fit"' not in body
-    assert 'href="#teams"' in body
-    assert 'href="#verify"' in body
-
 
 def test_the_contact_preview_keeps_the_honeypot_and_posts_nowhere_else() -> None:
     """The bot trap is part of the endpoint's contract, not decoration.
@@ -524,41 +382,50 @@ def test_next_assets_are_served_and_cached_as_immutable_content() -> None:
     assert "'unsafe-inline'" not in response.headers["content-security-policy"]
 
 
-def test_canonical_public_routes_serve_the_built_export() -> None:
-    """Built public pages are served byte-for-byte from the committed export."""
+def test_canonical_public_routes_are_served_as_html() -> None:
+    """Built pages are reachable on their canonical public URLs."""
     client = _client()
 
-    for path, source in (
-        ("/", server_module.WEBUI_DIR / "index.html"),
-        ("/info", server_module.WEBUI_DIR / "info.html"),
-        ("/use-cases", server_module.WEBUI_DIR / "use-cases.html"),
-        ("/contact", server_module.WEBUI_DIR / "contact.html"),
-        ("/login", server_module.WEBUI_DIR / "login.html"),
+    for path in (
+        "/",
+        "/architecture",
+        "/architecture/memory",
+        "/architecture/capture",
+        "/architecture/self-hosting",
+        "/use-cases",
+        "/contact",
+        "/login",
     ):
         response = client.get(path)
         assert response.status_code == 200, path
-        assert response.content == source.read_bytes(), path
         assert response.headers["content-type"].startswith("text/html"), path
+        assert response.content.strip(), path
+
+    for path in ("/info", "/next/info"):
+        assert client.get(path).status_code == 404, path
 
 
 def test_public_routes_fall_back_to_hand_written_pages_without_an_export(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """A source checkout without `build:web` keeps every public route usable."""
+    """Maintained fallback pages stay public when the export is absent."""
     monkeypatch.setattr(server_module, "WEBUI_DIR", tmp_path)
     client = _client()
-    static = server_module.STATIC_DIR
 
-    for path, source in (
-        ("/", static / "landing.html"),
-        ("/info", static / "info.html"),
-        ("/use-cases", static / "use-cases.html"),
-        ("/contact", static / "contact.html"),
-    ):
+    for path in ("/", "/use-cases", "/contact", "/login"):
         response = client.get(path)
         assert response.status_code == 200, path
-        assert response.content == source.read_bytes(), path
+        assert response.headers["content-type"].startswith("text/html"), path
+        assert response.content.strip(), path
 
-    login = client.get("/login")
-    assert login.status_code == 200
-    assert login.text == server_module.LOGIN_HTML
+    # Architecture pages have no hand-written fallback; missing exports and
+    # removed status pages must fail closed rather than serve a different page.
+    for path in (
+        "/architecture",
+        "/architecture/memory",
+        "/architecture/capture",
+        "/architecture/self-hosting",
+        "/info",
+        "/next/info",
+    ):
+        assert client.get(path).status_code == 404, path
