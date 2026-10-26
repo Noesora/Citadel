@@ -11,6 +11,7 @@ name: Test
 #   uv run pytest tests/ -q
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -189,13 +190,13 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
       - name: Install locked frontend dependencies
         run: npm ci
 
-      - name: Typecheck Next app
+      - name: Typecheck frontend and Pages Function
         run: npm run typecheck --workspace web
 
       - name: Run frontend unit tests

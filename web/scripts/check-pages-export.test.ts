@@ -12,8 +12,7 @@ const ISSUES = "https://github.com/Noesora/Citadel/issues";
 const nav = '<a href="/">Home</a><a href="/architecture">Architecture</a><a href="/use-cases">Use cases</a><a href="/waitlist">Join waitlist</a>';
 const page = (body: string) => `<html><body>${nav}${body}</body></html>`;
 
-// A Pages export that is closed the way the real one is: no form, no email
-// route, no node-only link, and working navigation and anchors.
+// Only waitlist signup has a public backend. Other node-only controls stay closed.
 const clean: Record<string, string> = {
   "index.html": page(`<link href="/theme.css" rel="stylesheet"><script src="/theme.js"></script><div data-memory-scene="overview"></div><h2 id="start">Start</h2><a href="${ISSUES}">Open an issue</a><a href="#start">go</a><a href="/use-cases#fit">fit</a>`),
   "architecture.html": page(
@@ -24,7 +23,7 @@ const clean: Record<string, string> = {
   "architecture/self-hosting.html": page("<h1>Self-hosting</h1>"),
   "use-cases.html": page('<h2 id="fit">Fit</h2>'),
   "login.html": page("<h1>Sign in is unavailable</h1>"),
-  "waitlist.html": page('<h1>Join the waitlist</h1><p>Waitlist registration is not open on this site yet.</p><a href="/login">Sign in</a>'),
+  "waitlist.html": page('<h1>Join the waitlist</h1><form method="post" action="/waitlist"><input name="email" type="email"><input name="website" type="text"><button type="submit">Join waitlist</button></form><a href="/login">Sign in</a>'),
   "theme.js": "",
   "theme.css": "body{background:url(/bg.svg)}",
   "bg.svg": "<svg/>",
@@ -51,7 +50,7 @@ beforeEach(() => {
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("Pages export guard", () => {
-  it("passes a closed export whose links and anchors resolve", () => {
+  it("passes an export with only the backed waitlist form", () => {
     const { code, output } = run();
     expect(output).toContain("references resolve");
     expect(code).toBe(0);
@@ -62,7 +61,6 @@ describe("Pages export guard", () => {
     ["a mailto route", { "architecture.html": page('<a href="mailto:hello@example.test">mail</a>') }],
     ["a sign-in field", { "login.html": page('<input type="password" name="accessKey">') }],
     ["a form on any other page", { "index.html": page('<textarea name="message"></textarea>') }],
-    ["a waitlist form on Pages", { "waitlist.html": page('<form method="post" action="/waitlist"><input type="email"></form>') }],
   ])("rejects %s", (_name, files) => {
     write(files);
     const { code, output } = run();
@@ -179,11 +177,16 @@ describe("Pages export guard", () => {
     expect(output).toContain("waitlist.html: page is missing");
   });
 
-  it("rejects a static waitlist that does not say registration is closed", () => {
-    write({ "waitlist.html": page("<h1>Join the waitlist</h1>") });
-    const { code, output } = run();
-    expect(code).toBe(1);
-    expect(output).toContain("waitlist.html: the static page must say waitlist registration is not open");
+  it.each([
+    ["a GET submission", '<form method="get" action="/waitlist"><input name="email" type="email"><input name="website" type="text"></form>'],
+    ["an external submission", '<form method="post" action="https://other.example"><input name="email" type="email"><input name="website" type="text"></form>'],
+    ["an unrelated field", '<form method="post" action="/waitlist"><input name="email" type="email"><input name="website" type="text"><input name="accessKey" type="password"></form>'],
+    ["a submit override", '<form method="post" action="/waitlist"><input name="email" type="email"><input name="website" type="text"><button formaction="/admin/session">Submit</button></form>'],
+    ["a missing email field", '<form method="post" action="/waitlist"><input name="website" type="text"></form>'],
+    ["a second form", '<form method="post" action="/waitlist"><input name="email" type="email"><input name="website" type="text"></form><form action="/contact"></form>'],
+  ])("rejects a waitlist with %s", (_name, form) => {
+    write({ "waitlist.html": page(form) });
+    expect(run().code).toBe(1);
   });
 
   it("rejects a second landing memory scene", () => {

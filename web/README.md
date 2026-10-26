@@ -97,6 +97,28 @@ rejects former tenant names on any page. It also checks
 root-relative HTML src and href values and CSS url() references against exported
 files. It does not validate network APIs.
 
+### Public email waitlist
+
+VERIFIED: `/waitlist` accepts email signups through a Pages Function.
+It returns a saved receipt only after a D1 transaction succeeds.
+Duplicate emails receive the same receipt. No endpoint lists registered emails.
+The runtime checks in `scripts/waitlist-runtime.test.ts` passed all 16 cases.
+
+`wrangler.jsonc` uses separate production and preview databases.
+Each environment also needs an encrypted `WAITLIST_RATE_SALT` secret.
+Apply `migrations/0001_waitlist.sql` to the correct environment before deploying.
+Never bind preview code to production records.
+
+The request limit is 4096 bytes. The database permits three attempts per client
+in 15 minutes, 30 attempts globally per hour, and 5000 unique email records.
+It stores a keyed client-IP hash, not the raw address.
+Successful signup transactions delete attempt records older than one hour.
+Email records remain private in D1. This endpoint does not send email or
+create an account. The self-hosted Python waitlist remains unchanged.
+
+Run `npm test --workspace web -- scripts/waitlist-runtime.test.ts` from the
+repository root. These checks use Workerd and a disposable D1 database.
+
 ## Two things that are not free to change
 
 ### 1. The router is the Pages Router, because of the CSP

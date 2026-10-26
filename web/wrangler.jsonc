@@ -1,0 +1,26 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "citadel",
+  "compatibility_date": "2026-10-26",
+  "pages_build_output_dir": "./out",
+  "d1_databases": [
+    {
+      "binding": "WAITLIST_DB",
+      "database_name": "citadel-waitlist",
+      "database_id": "df7aae8d-36a0-48bb-a051-411176b08bb2",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "WAITLIST_DB",
+          "database_name": "citadel-waitlist-preview",
+          "database_id": "bffbc057-7d8f-41dc-8555-c2062383a815",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}
