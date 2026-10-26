@@ -6,6 +6,12 @@ All notable changes to `citadel-archive` are documented here. Format follows
 
 ## [Unreleased]
 
+- VERIFIED: The public Pages waitlist now has a same-origin Function and private
+  D1 storage. Duplicate requests receive the same saved receipt. Invalid input,
+  rate limits, and storage failures remain errors. The self-hosted API is unchanged.
+  Evidence: `web/scripts/waitlist-runtime.test.ts` passed 16 runtime checks.
+  Replacing the save with a read caused the persistence check to fail.
+
 - **Cloudflare Pages no longer serves `/contact`.** The Pages build removes
   `contact.html` and the contact page chunk, so `citadel.noesora.xyz/contact`
   returns 404 instead of a contact page. The nav drops the Contact link; the

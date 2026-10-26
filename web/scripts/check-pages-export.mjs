@@ -1,9 +1,9 @@
 /* Check the Pages static export before it is published.
  *
- * The FastAPI export uses /next; a Pages build must resolve files at /. This
- * also refuses a Pages site that offers a service it does not host: a form or
- * email route, a link to the dashboard or session API, or the former tenant's
- * identity. Usage: node check-pages-export.mjs [export-dir] (default web/out).
+ * The FastAPI export uses /next; a Pages build must resolve files at /. Only
+ * waitlist signup has a Pages Function. Other forms, email routes, node-only
+ * links and the former tenant's identity must not appear in the public export.
+ * Usage: node check-pages-export.mjs [export-dir] (default web/out).
  */
 import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -63,10 +63,8 @@ if (topLevel.some((name) => name === "info" || name === "info.html")) {
   problems.push("removed Status page remains in the public export");
 }
 
-// Pages has no backend. A control or link for one would collect or send input
-// into nothing, so none may exist on any page.
+// Only the email waitlist has a public write endpoint.
 const NO_BACKEND = /<(?:form|input|textarea)\b|mailto:/i;
-const WAITLIST_CLOSED_COPY = /waitlist registration is not open on this site yet/i;
 // Names and hosts of the previous operator. An architecture page may link two
 // upstream issues as history; any other masumi-network URL is an identity leak.
 const FORMER_IDENTITY = /utxo AG|utxo\.ag|nmkr\.io|Masumi Network|Sokosumi Network|\bZug\b/i;
@@ -78,6 +76,26 @@ const HISTORICAL_LINKS = new Set([
 // Services served by FastAPI or a node, never by the Pages site.
 const NODE_ONLY = /^\/(?:app|next|admin|api|readyz|healthz|contact(?:\.html)?)(?:\/|$)/;
 const REMOVED_STATUS = /^\/info(?:\.html)?(?:\/|$)/;
+
+function attribute(tag, name) {
+  return tag.match(new RegExp(`\\b${name}\\s*=\\s*["']([^"']*)["']`, "i"))?.[1];
+}
+
+function backedWaitlist(html) {
+  const forms = [...html.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/gi)];
+  if (forms.length !== 1) return null;
+  const [form, tag, body] = forms[0];
+  const inputs = [...body.matchAll(/<input\b[^>]*>/gi)].map(([input]) => input);
+  const email = inputs.find((input) => attribute(input, "name") === "email");
+  const website = inputs.find((input) => attribute(input, "name") === "website");
+  if (
+    attribute(tag, "method")?.toLowerCase() !== "post" || attribute(tag, "action") !== "/waitlist"
+    || inputs.length !== 2 || !email || attribute(email, "type") !== "email"
+    || !website || attribute(website, "type") !== "text"
+    || /<(?:form|textarea|select)\b/i.test(body) || /\bform(?:action|method|enctype|target)\s*=/i.test(form)
+  ) return null;
+  return html.replace(form, body.replace(/<input\b[^>]*>/gi, ""));
+}
 
 const REQUIRED_PAGES = [
   "index.html",
@@ -119,11 +137,11 @@ let checked = 0;
 for (const file of htmlFiles) {
   const html = await readFile(file, "utf8");
   const relative = file.slice(out.length + 1);
-  if (NO_BACKEND.test(html)) {
+  const staticHtml = relative === "waitlist.html" ? backedWaitlist(html) : html;
+  if (staticHtml === null) {
+    problems.push("waitlist.html: signup must POST only email and honeypot fields to /waitlist");
+  } else if (NO_BACKEND.test(staticHtml)) {
     problems.push(relative + ": a form or email route remains without a backend");
-  }
-  if (relative === "waitlist.html" && !WAITLIST_CLOSED_COPY.test(html)) {
-    problems.push("waitlist.html: the static page must say waitlist registration is not open");
   }
   if (relative === "index.html") {
     const scenes = [...html.matchAll(/\bdata-memory-scene="([^"]+)"/g)];

@@ -38,6 +38,8 @@
     "node_modules",
     "flow",
     "out",
+    "functions",
+    "worker-configuration.d.ts",
     ".next"
   ]
 }
