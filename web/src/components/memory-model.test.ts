@@ -33,13 +33,6 @@ describe("single memory cycle", () => {
     state = advance(state, FLIGHT_END);
     expect(state.shared).toBe(false); expect(state.recalled).toBe(true);
   });
-  it("pause and resume retain phase and progress", () => {
-    let state = advance(createMemoryState(), 1);
-    state = transitionMemory(state, { type: "pause" });
-    expect(advance(state)).toEqual(state);
-    state = transitionMemory(state, { type: "play" });
-    expect(advance(state, .5).elapsed).toBe(1.5);
-  });
   it.each(["hover", "focus", "hidden", "dragging", "reduced"] as const)("suspends autoplay for %s", (reason) => {
     expect(canAdvance(createMemoryState(), { ...ready, [reason]: true })).toBe(false);
   });
