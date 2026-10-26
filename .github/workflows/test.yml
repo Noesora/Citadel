@@ -73,6 +73,7 @@ jobs:
           wheels=("$secure_cognee"/cognee-*.whl)
           test "${#wheels[@]}" -eq 1
           uv pip install --reinstall --no-deps "${wheels[0]}"
+          uv pip check
 
       - name: Confirm the interpreter actually under test
         run: uv run python -c "import sys; print(sys.version)"
@@ -110,6 +111,7 @@ jobs:
           wheels=("$secure_cognee"/cognee-*.whl)
           test "${#wheels[@]}" -eq 1
           uv pip install --reinstall --no-deps "${wheels[0]}"
+          uv pip check
 
       - name: pip-audit
         # PYSEC-2026-2447 is ignored pending an upstream fix. CVEs that already

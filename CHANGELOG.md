@@ -6,6 +6,18 @@ All notable changes to `citadel-archive` are documented here. Format follows
 
 ## [Unreleased]
 
+- VERIFIED: Updated targeted Python dependency constraints without changing the
+  Cognee runtime version or embedding model. The audited Cognee wheel accepts
+  fixed Filelock and Pillow dependencies through Fastembed 0.9.1. LiteLLM stays
+  at 1.96.2 because 1.106.4 rejects Filelock 4.
+  `uv pip check` reported `All installed packages are compatible`.
+  The unchanged audit command reported `No known vulnerabilities found, 3 ignored`.
+  An offline smoke produced distinct 384-dimensional vectors with
+  `HF_HUB_OFFLINE=1` and read-only caches. SDK lock acquisition, token expiry,
+  and valid/invalid image decoding also passed their runtime checks.
+  Scope correction: The network guard rejects Python socket connections.
+  It does not prove OS-wide egress isolation.
+
 - **Cloudflare Pages no longer serves `/contact`.** The Pages build removes
   `contact.html` and the contact page chunk, so `citadel.noesora.xyz/contact`
   returns 404 instead of a contact page. The nav drops the Contact link; the

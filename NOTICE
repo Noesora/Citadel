@@ -30,7 +30,11 @@ extra pulls those packages from PyPI; this repository redistributes none of
 their source.
 
 Citadel v0.5 server images build Cognee 1.4.1 from its exact PyPI source archive.
-The build changes only Cognee's cryptography upper bound from `<50` to `<51` so
-the image can use cryptography 50.0.0. The build verifies the source SHA-256 and
-retains Cognee's LICENSE and NOTICE.md in the resulting wheel. The build script
-and pinned source record are in `scripts/build_secure_cognee.py`.
+The audited build permits cryptography <51, Filelock >=4.2.1,<5, and the
+Fastembed 0.9.1 companion. It preserves the existing Ladybug home-directory
+patch. The build verifies fixed source and wheel SHA-256 values and retains
+Cognee's LICENSE and NOTICE.md. Its source record and patches are in
+scripts/build_secure_cognee.py.
+
+Correction: Earlier text incorrectly described this as a cryptography-only
+change. That description omitted the existing Ladybug home-directory patch.
