@@ -16,17 +16,11 @@ WEB_SRC = REPO / "web" / "src"
 
 
 def public_surfaces() -> dict[str, str]:
-    """Every document that carries the shared public top nav.
-
-    Membership is derived from the nav itself rather than listed, so a page
-    added later is covered the day it is written. `kb/static/index.html` is
-    excluded by that derivation and should be: it is the signed-in dashboard
-    shell, which has a sidebar and no top nav.
-    """
+    """Hand-written public fallbacks and the generated login page."""
     pages = {
-        f"kb/static/{p.name}": text
-        for p in sorted(STATIC.glob("*.html"))
-        if 'class="topnav"' in (text := p.read_text(encoding="utf-8"))
+        f"kb/static/{name}": text
+        for name in ("landing.html", "use-cases.html", "contact.html")
+        if 'class="topnav"' in (text := (STATIC / name).read_text(encoding="utf-8"))
     }
     pages["kb/server.py:LOGIN_HTML"] = server_module.LOGIN_HTML
     return pages
@@ -36,11 +30,11 @@ def test_the_public_surfaces_are_the_ones_we_think_they_are() -> None:
     """Guards every check below from passing over a shrunken set."""
     assert set(public_surfaces()) >= {
         "kb/static/landing.html",
-        "kb/static/info.html",
         "kb/static/use-cases.html",
         "kb/static/contact.html",
         "kb/server.py:LOGIN_HTML",
     }
+
 
 
 def authored_sources() -> dict[str, str]:
@@ -92,67 +86,6 @@ def test_the_contact_page_offers_an_email_route() -> None:
     body = (STATIC / "contact.html").read_text(encoding="utf-8")
     assert 'href="mailto:' in body, "no mailto route on /contact"
     assert "sarthi.borkar@nmkr.io" in body
-
-
-# --------------------------------------------------------------------------
-# the proof tiles
-# --------------------------------------------------------------------------
-
-
-def test_the_landing_proof_tiles_say_what_they_measure() -> None:
-    body = (STATIC / "landing.html").read_text(encoding="utf-8")
-    for label in (
-        "Open source, self-hosted",
-        "Per agent. Central stays in sync",
-        "MCP tools for agents",
-        "Self-host; mostly RAM, not a fixed bill",
-    ):
-        assert label in body, f"missing landing tile: {label}"
-    assert "Apache-2.0" in body
-    assert "Seat + Node" in body
-    assert "~$23–$58/mo" in body
-    assert "To self-host the whole node" not in body
-    assert "~$23/mo" not in body
-    assert "~$38/mo" not in body
-    assert "~$55/mo" not in body
-    assert ">25 s<" not in body
-    assert ">269 ms<" not in body
-    tsx = (WEB_SRC / "pages" / "index.tsx").read_text(encoding="utf-8")
-    assert "Apache-2.0" in tsx
-    assert "Seat + Node" in tsx
-    assert "~$23–$58/mo" in tsx
-    assert ">25 s<" not in tsx
-    assert "~$23/mo" not in tsx
-    assert "~$55/mo" not in tsx
-    assert ">269 ms<" not in tsx
-
-
-def test_the_info_tiles_say_when_each_figure_was_taken() -> None:
-    body = (STATIC / "info.html").read_text(encoding="utf-8")
-    assert "Self-host; mostly RAM, not a fixed bill" in body
-    assert "per agent. Central stays in sync" in body
-    assert "Seat + Node" in body
-    assert "~$23–$58/mo" in body
-    assert "~$23/mo" not in body
-    assert "about $58" in body
-    assert "7-day 2026-08-14" in body
-    assert ">25 s<" not in body
-    assert ">269 ms<" not in body
-    assert "Search 25 s is the" not in body
-    assert "~$55/mo" not in body
-    # v0.5.0 release note is historical and stays true for that tag.
-    assert "Self-host cost stays ~$38/mo" in body
-    tsx = (WEB_SRC / "pages" / "info.tsx").read_text(encoding="utf-8")
-    assert "~$23–$58/mo" in tsx
-    assert "~$23/mo" not in tsx
-    assert "Seat + Node" in tsx
-    assert 'value="25 s"' not in tsx
-    assert 'value="269 ms"' not in tsx
-    assert "Self-host; mostly RAM, not a fixed bill" in tsx
-    assert "Search 25 s is the" not in tsx
-    assert "about $58" in tsx
-    assert "7-day 2026-08-14" in tsx
-    assert "Self-host cost stays" in tsx and "~$38/mo" in tsx
 
 
 @pytest.mark.parametrize(

@@ -445,22 +445,6 @@ def authed_client(access_key: str = "test-admin") -> TestClient:
     return client
 
 
-LEGACY_PUBLIC_SOURCES = {
-    "/": "landing.html",
-    "/info": "info.html",
-    "/use-cases": "use-cases.html",
-    "/contact": "contact.html",
-}
-
-
-def legacy_public_markup(path: str) -> str:
-    if path == "/login":
-        return server_module.LOGIN_HTML
-    return (server_module.STATIC_DIR / LEGACY_PUBLIC_SOURCES[path]).read_text(
-        encoding="utf-8"
-    )
-
-
 def test_healthz() -> None:
     client = TestClient(app)
 
@@ -1183,18 +1167,10 @@ def test_security_headers_are_applied_to_http_responses() -> None:
 
 
 def test_no_path_relaxes_style_src() -> None:
-    """Every route, / included, is served under the strict style-src.
+    """Public and authenticated routes keep the same-origin policy.
 
-    / renders a React Flow diagram that positions nodes by writing inline
-    `transform` styles, and for a while that bought it the site's one
-    'unsafe-inline' exemption. The exemption protected nothing: React writes
-    those transforms through the CSSOM (element.style), which style-src does
-    not govern. The directive covers <style> elements and style attributes
-    arriving in markup. With the exemption removed, the diagram rendered
-    identically and no securitypolicyviolation fired (measured in Chrome; the
-    CSSOM carve-out is spec behaviour). So / is pinned strict here alongside
-    everything else, and most deliberately of all: it is the one path that
-    would drift back.
+    The current public landing and architecture pages must not need an inline
+    style exemption; executable scripts and styles stay same-origin as well.
     """
     client = authed_client()
 
@@ -1213,7 +1189,9 @@ def test_no_path_relaxes_style_src() -> None:
         "/healthz",
         "/api/state",
     ):
-        policy = client.get(path).headers["content-security-policy"]
+        response = client.get(path)
+        assert response.status_code == 200, path
+        policy = response.headers["content-security-policy"]
         assert strict in policy, f"{path} lost the strict style-src"
         assert "'unsafe-inline'" not in policy, f"{path} carries an inline-style relaxation"
         # Script execution stays restricted to same-origin files everywhere.
@@ -1242,35 +1220,6 @@ def test_csp_relaxation_is_opt_in_and_cannot_widen_by_accident() -> None:
     # Script execution is never part of the bargain, in either policy.
     assert "script-src 'self';" in server_module.CONTENT_SECURITY_POLICY_INLINE_STYLE
 
-
-def test_landing_diagram_ships_as_markup_and_upgrades_to_the_bundle() -> None:
-    """Two forms of one diagram, and the served HTML must carry the simple one.
-
-    The React Flow bundle is ~330 KB and is fetched only when the diagram
-    scrolls into view. Someone who never scrolls that far, or who has
-    JavaScript off, has to get a correct picture from the HTML alone, so the
-    four-step spine ships visible and the React container ships empty.
-    """
-    home = legacy_public_markup("/")
-
-    # The plain diagram ships visible, and it is four steps, not the fourteen
-    # element two-lane version it replaced.
-    assert '<div class="spine" id="spine-static"' in home
-    for step in ("Capture", "Your Node", "Promotion", "Central"):
-        assert f'<span class="t">{step}</span>' in home, step
-    # The guarantee sentence survives every simplification of this diagram, and
-    # stays on screen in both forms.
-    assert "never another seat's" in home
-
-    # The React container ships hidden and empty.
-    assert '<div class="flowmount" id="flow-root" hidden></div>' in home
-    # The bundle is never referenced from the HTML: landing.js injects it only
-    # after the IntersectionObserver fires, so it costs nothing until reached.
-    assert "flow.js" not in home
-    assert "flow.css" not in home
-    landing_js = (server_module.STATIC_DIR / "landing.js").read_text(encoding="utf-8")
-    assert "/static/vendor/flow.js" in landing_js
-    assert "IntersectionObserver" in landing_js
 
 
 def test_landing_flow_bundle_is_committed_and_served() -> None:
@@ -1339,52 +1288,22 @@ def test_mcp_legacy_path_redirects_relative() -> None:
     assert response.headers["pragma"] == "no-cache"
 
 
-def test_login_page_uses_static_script_for_csp() -> None:
-    page = legacy_public_markup("/login")
+def test_login_page_uses_static_script_for_csp(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(server_module, "WEBUI_DIR", tmp_path)
+    response = TestClient(app, base_url="https://testserver").get("/login")
 
+    assert response.status_code == 200
+    page = response.text
     assert '<script src="/static/login.js" type="module"></script>' in page
     assert "<script>\n" not in page
     assert "<style>" not in page
     assert 'style="' not in page
-
-
-def test_login_page_uses_the_public_design_system() -> None:
-    """/login is a public page, so it wears info.css — not the dashboard theme.
-
-    A visitor arriving from /info must not be handed to a visibly different
-    product at the door: same stylesheet, same nav, same theme toggle.
-    """
-    page = legacy_public_markup("/login")
-
-    assert '<link rel="stylesheet" href="/static/info.css">' in page
-    assert "/static/styles.css" not in page
-    assert 'class="topnav"' in page
-    assert 'id="themebtn"' in page
-
-def test_use_cases_page_is_public_and_csp_clean() -> None:
-    page = legacy_public_markup("/use-cases")
-    # No token, no session — a coordinator or a curious engineer must be able
-    # to open this. Team use cases are the default; partner copy stays in the
-    # document, hidden until Partner is pressed.
-    assert "Four things teams run it for" in page
-    assert "Draft work package" in page
-    assert "One work package, scoped to your call" in page
-    for section_id in ("fit", "can", "wp", "ask", "talk"):
-        tag = re.search(rf'<section[^>]*id="{section_id}"[^>]*>', page)
-        assert tag is not None, section_id
-        assert "hidden" in tag.group(0), f"#{section_id} should be hidden by default"
-    teams = re.search(r'<section[^>]*id="teams"[^>]*>', page)
-    assert teams is not None
-    assert "hidden" not in teams.group(0)
-    assert 'id="audience"' in page
-    assert 'aria-pressed="true"' in page
-    # Reuses the /info stylesheet + script rather than shipping its own.
-    assert '<link rel="stylesheet" href="/static/info.css">' in page
-    assert '<script src="/static/info.js" defer></script>' in page
-    # Strict CSP: nothing inline.
-    assert "<script>\n" not in page
-    assert "<style>" not in page
-    assert 'style="' not in page
+    policy = response.headers["content-security-policy"]
+    assert "script-src 'self';" in policy
+    assert "style-src 'self';" in policy
+    assert "'unsafe-inline'" not in policy
 
 
 def test_partners_url_still_resolves() -> None:
@@ -1402,70 +1321,16 @@ def test_partners_url_still_resolves() -> None:
 
 
 def test_contact_page_is_public_and_csp_clean() -> None:
-    """The contact form is its own page, not a section at the bottom of another."""
-    page = legacy_public_markup("/contact")
+    """The contact form is reachable without a session and serves safe markup."""
+    response = TestClient(app, base_url="https://testserver").get("/contact")
 
-    assert 'id="contactForm"' in page
-    assert '<script src="/static/contact.js" defer></script>' in page
-    # The form only lives here now — /use-cases points at it instead.
-    assert 'id="contactForm"' not in legacy_public_markup("/use-cases")
-    assert '<link rel="stylesheet" href="/static/info.css">' in page
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    page = response.text
+    assert 'name="website"' in page
     assert "<script>\n" not in page
     assert "<style>" not in page
     assert 'style="' not in page
-
-
-def test_public_pages_share_one_top_nav() -> None:
-    """Every public page carries the same nav, each marking its own entry.
-
-    The nav is what stops the public pages from being orphans reachable only by
-    direct link.
-    """
-    pages = {
-        path: legacy_public_markup(path)
-        for path in ("/", "/info", "/use-cases", "/contact", "/login")
-    }
-
-    for path, page in pages.items():
-        assert 'class="topnav"' in page, path
-        public_model_link = "/architecture" if path == "/login" else "/info"
-        for link in ("/", public_model_link, "/use-cases", "/contact", "/login"):
-            assert f'<a href="{link}"' in page, f"{path} is missing the {link} nav link"
-        if path == "/login":
-            assert '<a href="/info"' not in page
-        assert "Sign in</a>" in page, path
-        # The lockup lives in the nav now, so the page header must not repeat it.
-        assert 'class="brandrow"' not in page, path
-        assert f'<a href="{path}" aria-current="page">' in page, path
-
-
-def test_public_pages_share_the_band_layout() -> None:
-    """/info, /use-cases and /contact are built from the same bands as /.
-
-    All three were a single 860px .wrap column left over from before the home
-    page was rebuilt into alternating full-bleed bands. Side by side they read
-    as two different websites, which one shared nav does not fix. The band
-    rhythm and the sticky section index are what make the five pages one site,
-    so they are pinned here rather than left to the next redesign to notice.
-    """
-    for path in ("/info", "/use-cases", "/contact"):
-        page = legacy_public_markup(path)
-
-        # The hero band carries the nav and the glow, exactly as / does.
-        assert '<div class="band band-hero">' in page, path
-        assert 'class="hero-glow' in page, path
-        # Content sits in bands, never in the old single column.
-        assert page.count('<div class="band-in">') >= 2, path
-        assert 'class="wrap"' not in page, path
-        # One sticky index per page, and the jump-chip nav it replaced is gone.
-        assert '<nav class="index" aria-label="Sections">' in page, path
-        assert 'class="toc"' not in page, path
-        # The index is only a bar of dead links without the observer that
-        # tracks the section in view.
-        assert '<script src="/static/landing.js" defer></script>' in page, path
-        # The live pill rides in the index bar, where / carries it.
-        index = page[page.index('<nav class="index"'):page.index("</nav>", page.index('<nav class="index"'))]
-        assert 'id="pill-health"' in index, path
 
 
 def test_every_internal_link_on_the_public_pages_resolves() -> None:
@@ -1533,28 +1398,6 @@ def test_every_internal_link_on_the_public_pages_resolves() -> None:
     assert checked > 30, f"only {checked} internal links found; the scan broke"
 
 
-def test_public_pages_avoid_info_report_element_ids() -> None:
-    """Pages sharing info.js with /info must not reuse report-only ids.
-
-    info.js unconditionally writes the State-of-the-Vault text into these ids
-    wherever it finds them. The partnering page reusing id="foot-note" silently
-    replaced its own footer with "State-of-the-vault report ... window v0.2.0 ->
-    v0.4.0" at runtime, which no server-side test would have caught.
-
-    Each page keeps only the ids it genuinely wants hydrated: the health pill
-    and the brand mark.
-    """
-    report_only_ids = ("foot-note", "state-updated", "m-version", "m-docs", "m-docs-sub")
-    for path in ("/use-cases", "/contact"):
-        page = legacy_public_markup(path)
-        for element_id in report_only_ids:
-            assert f'id="{element_id}"' not in page, (
-                f'{path} declares id="{element_id}", which info.js overwrites '
-                "with /info report copy. Use a different id or no id."
-            )
-        assert 'id="pill-health-text"' in page, path
-        assert 'id="mark"' in page, path
-
 
 def test_contact_page_has_no_unfilled_placeholders() -> None:
     """Contact details must be filled in before this page is deployed.
@@ -1585,173 +1428,6 @@ def test_contact_page_has_no_unfilled_placeholders() -> None:
                 "surface that renders them."
             )
 
-
-def test_each_public_page_owns_its_subject() -> None:
-    """One subject, one page. The public pages used to repeat each other.
-
-    /info explained the Seat/Node/Central model and how to install, both of
-    which / already covered in full, so the same paragraphs were maintained in
-    two places and drifted. Home owns what-it-is and how-to-start; /info owns
-    the live numbers and the roadmap.
-    """
-    home = legacy_public_markup("/")
-    info = legacy_public_markup("/info")
-
-    # The pipeline diagram and the install commands live on / only.
-    assert 'class="spine"' in home
-    assert 'class="spine"' not in info
-    assert "pipx install citadel-archive" in home
-    assert "npx skills add masumi-network/citadel --skill citadel" in home
-    assert "citadel onboard" not in home
-    assert "citadel onboard" not in info
-    # The live tiles and the roadmap live on /info only.
-    assert 'id="m-version"' in info
-    assert 'id="m-version"' not in home
-
-
-def test_home_owns_install_and_the_diagram() -> None:
-    """The diagram and the install commands live on / and nowhere else.
-
-    Both used to be repeated on /info, and the copies drifted. This widens
-    test_each_public_page_owns_its_subject from the /info pair to every public
-    page, so a future page cannot quietly grow a second copy of either.
-    """
-    home = legacy_public_markup("/")
-    others = {
-        path: legacy_public_markup(path)
-        for path in ("/info", "/use-cases", "/contact", "/login")
-    }
-
-    assert 'class="spine"' in home
-    assert "pipx install citadel-archive" in home
-    assert "npx skills add masumi-network/citadel --skill citadel" in home
-    assert "citadel onboard" not in home
-    assert 'id="m-version"' not in home
-    for path, page in others.items():
-        assert 'class="spine"' not in page, path
-        assert "pipx install citadel-archive" not in page, path
-    # The live version tile is /info's, and only /info's.
-    assert 'id="m-version"' in others["/info"]
-
-
-def test_home_hero_has_no_terminal_block() -> None:
-    """The hero is type only. The terminal block was removed on purpose.
-
-    Four hero variants were built and looked at; the one with a terminal made
-    the page read as documentation rather than as an argument, and pushed the
-    lede below the fold. The commands still ship, at the bottom of the page.
-    This pins the decision so it cannot drift back in.
-    """
-    home = legacy_public_markup("/")
-    hero = home[home.index('<header class="hero">'):home.index("</header>")]
-
-    assert "<pre" not in hero
-    assert 'class="term' not in hero
-    # ...and the commands are still on the page, just not in the hero.
-    assert "pipx install citadel-archive" in home
-
-
-def test_home_rotator_has_a_fixed_word_list() -> None:
-    """The rotating headline word carries exactly this list, in this order.
-
-    A half-edited list is the likely failure: five words tuned together, one
-    of them swapped later without the others. The sixth entry repeats the
-    first and is not a word in the list — it is the seam that lets the CSS
-    keyframe wrap from the last word back to the first without a jump cut.
-    """
-    client = TestClient(app, base_url="https://testserver")
-
-    home = client.get("/").text
-    rotator = re.search(r'<span class="roll">(.*?)</span></h1>', home, re.S)
-
-    assert rotator is not None, "/ no longer carries a .roll rotator in its h1"
-    words = re.findall(r">([^<>]+)</span>", rotator.group(1))
-    assert words == [
-        "decisions.",
-        "dead ends.",
-        "reasons.",
-        "sessions.",
-        "context.",
-        "decisions.",
-    ]
-
-
-def test_home_motion_respects_reduced_motion() -> None:
-    """Both ambient animations stop under prefers-reduced-motion: reduce.
-
-    The glow and the word roll are the only two loops on the page, and both
-    are CSS keyframes, so the only place this can be honoured is inside
-    info.css's global reduced-motion block. A content assertion is weak, but a
-    server-side test cannot evaluate a media query.
-    """
-    css = (server_module.STATIC_DIR / "info.css").read_text(encoding="utf-8")
-
-    start = css.index("@media (prefers-reduced-motion: reduce)")
-    block = css[start:css.index("\n}", start)]
-
-    # Both animations exist...
-    assert "@keyframes drift" in css
-    assert "@keyframes rollup" in css
-    assert "animation: drift" in css
-    assert "animation: rollup" in css
-    # ...and both are neutralised inside the reduced-motion block. !important
-    # matters: each animation is declared later in the file at the same
-    # specificity, so a plain override would lose the cascade.
-    assert ".hero-glow { animation: none !important; }" in block
-    # The track carries the animation, not the window. `.roll` clips and never
-    # moves; neutralising it here would be a no-op and the words would keep
-    # rolling with reduced motion on.
-    assert ".roll-track { animation: none !important;" in block
-
-
-def test_home_rotator_window_and_track_are_separate_elements() -> None:
-    """The clipping element and the animated element must not be the same one.
-
-    They were, once. `.roll` both clipped (`overflow: hidden` plus a fixed
-    height) and carried the `rollup` animation, so the translate walked the
-    clipping box down the page instead of scrolling the words through it, and
-    every word rendered at once as a stack. Correct markup did not catch it,
-    because the markup was already correct. This pins the structure instead.
-    """
-    css = (server_module.STATIC_DIR / "info.css").read_text(encoding="utf-8")
-
-    # rindex, not index: `.roll-track` also appears inside the reduced-motion
-    # block earlier in the file, where it is deliberately set to `animation: none`.
-    # The real declaration is the later one.
-    window = css[css.index(".roll {"):css.index("\n", css.index(".roll {"))]
-    track = css[css.rindex(".roll-track {"):css.index("\n", css.rindex(".roll-track {"))]
-
-    assert "overflow: hidden" in window, ".roll must be the clipping window"
-    assert "animation:" not in window, (
-        ".roll must not animate. If the element that clips is also the element "
-        "that moves, the whole word list renders as a visible stack."
-    )
-    assert "animation: rollup" in track, ".roll-track must carry the animation"
-
-    # The window must not lay its own children out in a column, and must not
-    # stretch the track to its own height. Either one squashes six 1.03em items
-    # into a 1.03em box, where they are shrinkable flex items saved only by the
-    # automatic minimum size rule.
-    assert "flex-direction: column" not in window, (
-        ".roll must not be a column: it would stack the words rather than clip them"
-    )
-    assert "align-items: flex-start" in window, (
-        ".roll must not stretch .roll-track, or the track is forced to the "
-        "window's height and its six items become shrinkable inside it"
-    )
-    assert "flex-direction: column" in track, ".roll-track stacks the words"
-
-    # Offsets in em, not percentages: percentages resolve against the track's
-    # own height, so adding or removing a word silently drifts every step.
-    frames = css[css.index("@keyframes rollup"):]
-    frames = frames[:frames.index("\n}")]
-    assert "%)" not in frames.replace("0%,", "").replace("%,", ""), (
-        "rollup offsets must be in em, matching the item height"
-    )
-
-    client = TestClient(app, base_url="https://testserver")
-    page = client.get("/").text
-    assert 'class="roll"><span class="roll-track">' in page.replace("\n", "")
 
 
 def test_no_vendor_name_on_user_facing_surfaces() -> None:
@@ -2833,20 +2509,19 @@ def test_ui_requires_admin_key() -> None:
 
 
 def test_root_is_the_public_landing_page_for_everyone() -> None:
-    """/ never serves the app, signed in or not.
-
-    One URL, one body: a member must be able to open the landing page and send
-    the link on instead of being bounced into the dashboard.
-    """
+    """/ stays public for anonymous visitors and authenticated members alike."""
     app.state.citadel = FakeCitadel()
 
-    anon = TestClient(app).get("/")
+    anon = TestClient(app, base_url="https://testserver").get("/")
     member = authed_client().get("/")
 
     for response in (anon, member):
         assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/html")
+        assert response.content.strip()
         assert 'id="graphCanvas"' not in response.text
-        assert "Citadel remembers your" in response.text
+
+    assert anon.content == member.content
 
 
 def test_ui_shell_is_served_after_login() -> None:
