@@ -23,7 +23,6 @@ export function MemoryScene({ children }: { children: ReactNode }) {
     const slip = svg.querySelector<SVGGElement>("[data-memory-slip]")!;
     const readout = host.querySelector<HTMLElement>("[data-readout]")!;
     const live = host.querySelector<HTMLElement>("[data-announce]")!;
-    const play = host.querySelector<HTMLButtonElement>("[data-play]")!;
     const buttons = [...host.querySelectorAll<HTMLButtonElement>("[data-step]")];
     const storyLabel = host.querySelector<HTMLElement>("[data-story-label]")!;
     const storyTitle = host.querySelector<HTMLElement>("[data-story-title]")!;
@@ -69,9 +68,6 @@ export function MemoryScene({ children }: { children: ReactNode }) {
         readout.textContent = story.copy; lastStep = state.step;
       }
       buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.step === state.step)));
-      play.textContent = state.playing ? "Pause cycle" : "Resume cycle";
-      play.disabled = still.matches;
-      if (still.matches) play.textContent = "Reduced motion";
       host.dataset.step = state.step;
       host.dataset.elapsed = state.elapsed.toFixed(3);
       host.dataset.shared = String(state.shared);
@@ -105,6 +101,9 @@ export function MemoryScene({ children }: { children: ReactNode }) {
       if (message) announce(message);
       run();
     }
+    function resume() {
+      if (!state.playing && !still.matches && !focus && !drag) state = transitionMemory(state, { type: "play" });
+    }
     function zone(target: EventTarget | null): MemoryZone | undefined {
       return target instanceof Element ? target.closest<SVGGElement>("[data-zone]")?.dataset.zone as MemoryZone | undefined : undefined;
     }
@@ -117,12 +116,10 @@ export function MemoryScene({ children }: { children: ReactNode }) {
       const step = button.dataset.step as MemoryStep;
       apply({ type: "select", step, reduced: still.matches }, still.matches ? STORIES[step].done : STORIES[step].copy);
     }));
-    listen(play, "click", () => { releaseDrag(); apply({ type: state.playing ? "pause" : "play" }, state.playing ? "Cycle paused. Explore the scene." : "Cycle resumes when you leave the illustration."); });
-    listen(host.querySelector("[data-reset]")!, "click", () => { releaseDrag(); apply({ type: "reset", reduced: still.matches }, "Reset. Your context stays private."); });
     listen(art, "pointerenter", () => { hover = true; draw(); run(); });
-    listen(art, "pointerleave", () => { hover = false; draw(); run(); });
+    listen(art, "pointerleave", () => { hover = false; resume(); draw(); run(); });
     listen(host, "focusin", () => { focus = true; draw(); run(); });
-    listen(host, "focusout", ((event: FocusEvent) => { focus = event.relatedTarget instanceof Node && host.contains(event.relatedTarget); draw(); run(); }) as EventListener);
+    listen(host, "focusout", ((event: FocusEvent) => { focus = event.relatedTarget instanceof Node && host.contains(event.relatedTarget); if (!focus) resume(); draw(); run(); }) as EventListener);
     listen(svg, "pointermove", ((event: PointerEvent) => {
       if (drag) { const p = point(event); if (p) { drag.x = p.x; drag.y = p.y; draw(); } return; }
       if (event.pointerType === "touch") return;
@@ -144,9 +141,9 @@ export function MemoryScene({ children }: { children: ReactNode }) {
       const next = to ? transitionMemory(state, { type: "drop", from, to }) : state;
       if (next === state) announce("Nothing shared. Use a matching memory path.");
       else { state = next; draw(); announce(STORIES[state.step].done); }
-      draw(); run();
+      resume(); draw(); run();
     }) as EventListener);
-    const cancel = () => { if (drag) { releaseDrag(); announce("Nothing shared."); draw(); run(); } };
+    const cancel = () => { if (drag) { releaseDrag(); announce("Nothing shared."); resume(); draw(); run(); } };
     listen(svg, "pointercancel", cancel);
     listen(svg, "lostpointercapture", cancel);
     listen(host, "keydown", ((event: KeyboardEvent) => { if (event.key === "Escape") { releaseDrag(); apply({ type: "reset", reduced: still.matches }, "Reset. Your context stays private."); } }) as EventListener);
@@ -155,7 +152,7 @@ export function MemoryScene({ children }: { children: ReactNode }) {
       observer.observe(art); cleanup.push(() => observer.disconnect());
     } else visible = true;
     listen(document, "visibilitychange", () => { if (document.hidden && frame) { cancelAnimationFrame(frame); frame = 0; } else run(); });
-    listen(still, "change", () => { releaseDrag(); if (still.matches) apply({ type: "reduce" }, "Motion paused. Choose a step to inspect it."); else { draw(); run(); } });
+    listen(still, "change", () => { releaseDrag(); if (still.matches) apply({ type: "reduce" }, "Motion paused. Choose a step to inspect it."); else { resume(); draw(); run(); } });
     draw(); run();
     return () => { if (frame) cancelAnimationFrame(frame); releaseDrag(); cleanup.forEach((remove) => remove()); };
   }, []);
@@ -179,7 +176,6 @@ export function MemoryScene({ children }: { children: ReactNode }) {
           </g>
         </svg>
         <div className="memory-modes" role="group" aria-label="Explore the memory illustration">{STEPS.map((step) => <button key={step} type="button" data-step={step} aria-pressed={step === "capture"}>{LABELS[step]}</button>)}</div>
-        <div className="memory-actions"><button type="button" data-play>Pause cycle</button><button type="button" data-reset>Reset</button></div>
         <p className="memory-readout" data-readout>Follow the copy through one connected scene.</p>
         <p className="memory-demo-note">Illustrative cycle. No vault data is read or sent. Hover or focus to pause.</p>
         <span className="sr-only" data-announce aria-live="polite" />

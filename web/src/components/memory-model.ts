@@ -12,7 +12,7 @@ export type MemoryState = {
 export type MemoryAction =
   | { type: "tick"; seconds: number }
   | { type: "select"; step: MemoryStep; reduced?: boolean }
-  | { type: "play" | "pause" | "interrupt" | "reduce" }
+  | { type: "play" | "interrupt" | "reduce" }
   | { type: "reset"; reduced?: boolean }
   | { type: "drop"; from: MemoryZone; to: MemoryZone };
 
@@ -41,7 +41,6 @@ function complete(state: MemoryState): MemoryState {
 export function transitionMemory(state: MemoryState, action: MemoryAction): MemoryState {
   if (action.type === "reset") return { ...createMemoryState(action.reduced), playing: false };
   if (action.type === "play") return { ...state, playing: true, manual: false };
-  if (action.type === "pause") return { ...state, playing: false, manual: false };
   if (action.type === "interrupt" || action.type === "reduce") return { ...state, elapsed: 0, playing: false, manual: false };
   if (action.type === "select") {
     const next = { ...state, step: action.step, elapsed: action.reduced ? STEP_SECONDS : 0, playing: false, manual: !action.reduced };

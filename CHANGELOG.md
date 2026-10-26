@@ -6,6 +6,12 @@ All notable changes to `citadel-archive` are documented here. Format follows
 
 ## [Unreleased]
 
+- VERIFIED: The landing illustration loops without play/resume or Reset
+  controls. Pointer and keyboard interactions remain available. Autoplay resumes
+  after interaction and stays disabled under reduced motion.
+  Evidence: `web/src/components/memory-scene.test.ts` passed four DOM behavior
+  checks; the same checks failed three cases against the prior PR9 source.
+
 - **Cloudflare Pages no longer serves `/contact`.** The Pages build removes
   `contact.html` and the contact page chunk, so `citadel.noesora.xyz/contact`
   returns 404 instead of a contact page. The nav drops the Contact link; the
