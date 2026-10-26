@@ -68,6 +68,19 @@ that source and output can disagree: rebuild and commit together.
 
 `web/.next/` and `web/out/` are build scratch and are ignored.
 
+### Landing illustration
+
+VERIFIED: The illustration loops automatically without play/resume or Reset
+buttons. Hover and keyboard focus pause autoplay. Phase buttons still complete
+their selected action. Leaving the interaction resumes autoplay.
+
+Reduced motion stops automatic movement. The phase buttons remain usable.
+The interaction rules are in `src/components/memory-scene.tsx:104-155`.
+
+Run `npm test --workspace web -- src/components/memory-scene.test.ts` from the
+repository root. These checks exercise actual DOM events. They cover repeated
+cycles, keyboard continuation, pointer inspection, and motion-preference changes.
+
 ### Cloudflare Pages
 
 The public landing is also published by the Cloudflare Pages project `citadel`

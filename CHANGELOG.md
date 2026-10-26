@@ -11,6 +11,11 @@ All notable changes to `citadel-archive` are documented here. Format follows
   rate limits, and storage failures remain errors. The self-hosted API is unchanged.
   Evidence: `web/scripts/waitlist-runtime.test.ts` passed 16 runtime checks.
   Replacing the save with a read caused the persistence check to fail.
+- VERIFIED: The landing illustration loops without play/resume or Reset
+  controls. Pointer and keyboard interactions remain available. Autoplay resumes
+  after interaction and stays disabled under reduced motion.
+  Evidence: `web/src/components/memory-scene.test.ts` passed four DOM behavior
+  checks; the same checks failed three cases against the prior PR9 source.
 
 - **Cloudflare Pages no longer serves `/contact`.** The Pages build removes
   `contact.html` and the contact page chunk, so `citadel.noesora.xyz/contact`
