@@ -1,11 +1,15 @@
+"""§V21: reject unsafe or drifted SDK build metadata before distribution."""
+
 from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
 import tarfile
+import tomllib
 import zipfile
 
 import pytest
+from packaging.requirements import Requirement
 
 from scripts import build_secure_cognee
 
@@ -20,24 +24,62 @@ def _write_audited_ladybug_sources(source: Path) -> None:
         path.write_text("\n".join(blocks), encoding="utf-8")
 
 
-def test_patch_changes_only_the_audited_requirement(tmp_path: Path) -> None:
+def test_patch_permits_fixed_dependencies_and_preserves_other_pins(tmp_path: Path) -> None:
     source = tmp_path / "cognee-1.4.1"
     source.mkdir()
     pyproject = source / "pyproject.toml"
     pyproject.write_text(
-        f"[project]\ndependencies = [\n{build_secure_cognee.ORIGINAL_REQUIREMENT}\n]\n",
+        '[project]\ndependencies = [\n'
+        '    "cryptography>=43.0.0,<50",\n'
+        '    "filelock>=3.12.0,<4.0.0",\n'
+        '    "ladybug==0.18.2",\n'
+        ']\n[project.optional-dependencies]\nfastembed = [\n'
+        '    "fastembed<=0.8.0",\n]\n',
         encoding="utf-8",
     )
 
     build_secure_cognee.patch_pyproject(source)
 
-    assert pyproject.read_text(encoding="utf-8") == (
-        "[project]\ndependencies = [\n"
-        f"{build_secure_cognee.PATCH_NOTICE}\n"
-        f"{build_secure_cognee.PATCHED_REQUIREMENT}\n]\n"
-    )
+    project = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]
+    dependencies = {requirement.name: requirement for requirement in map(Requirement, project["dependencies"])}
+    assert dependencies["cryptography"].specifier.contains("50.0.0")
+    assert not dependencies["cryptography"].specifier.contains("51.0.0")
+    assert dependencies["filelock"].specifier.contains("4.2.1")
+    assert not dependencies["filelock"].specifier.contains("3.29.0")
+    assert not dependencies["filelock"].specifier.contains("5.0.0")
+    assert str(dependencies["ladybug"].specifier) == "==0.18.2"
+    companion = Requirement(project["optional-dependencies"]["fastembed"][0])
+    assert companion.specifier.contains("0.9.1")
+    assert not companion.specifier.contains("0.8.0")
     with pytest.raises(RuntimeError, match="audited source"):
         build_secure_cognee.patch_pyproject(source)
+
+
+@pytest.mark.parametrize(
+    "original",
+    [
+        '    "cryptography>=43.0.0,<50",',
+        '    "filelock>=3.12.0,<4.0.0",',
+        '    "fastembed<=0.8.0",',
+    ],
+)
+def test_metadata_drift_is_rejected_before_any_file_write(tmp_path: Path, original: str) -> None:
+    source = tmp_path / "cognee-1.4.1"
+    source.mkdir()
+    pyproject = source / "pyproject.toml"
+    before = (
+        '[project]\ndependencies = [\n'
+        '    "cryptography>=43.0.0,<50",\n'
+        '    "filelock>=3.12.0,<4.0.0",\n'
+        ']\n[project.optional-dependencies]\nfastembed = [\n'
+        '    "fastembed<=0.8.0",\n]\n'
+    ).replace(original, "")
+    pyproject.write_text(before, encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="audited source"):
+        build_secure_cognee.patch_pyproject(source)
+
+    assert pyproject.read_text(encoding="utf-8") == before
 
 
 def test_extract_rejects_parent_path(tmp_path: Path) -> None:
@@ -92,13 +134,27 @@ def test_patch_ladybug_home_rejects_source_drift_before_writing(tmp_path: Path) 
     assert helper.read_text(encoding="utf-8") == original_helper
 
 
-def test_verify_wheel_requires_patched_metadata_and_notices(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("filelock", "fastembed", "error"),
+    [
+        ("filelock<5.0.0,>=4.2.1", 'fastembed==0.9.1; extra == "fastembed"', None),
+        ("filelock<4.0.0,>=3.12.0", 'fastembed==0.9.1; extra == "fastembed"', "Filelock"),
+        ("filelock>=4.2.1", 'fastembed==0.9.1; extra == "fastembed"', "Filelock"),
+        ("filelock<5.0.0,>=4.2.1", 'fastembed<=0.8.0; extra == "fastembed"', "Fastembed"),
+    ],
+)
+def test_verify_wheel_requires_safe_metadata_and_notices(
+    tmp_path: Path, filelock: str, fastembed: str, error: str | None
+) -> None:
     wheel_path = tmp_path / "cognee-1.4.1-py3-none-any.whl"
     metadata = (
         "Metadata-Version: 2.4\n"
         "Name: cognee\n"
         "Version: 1.4.1\n"
-        "Requires-Dist: cryptography<51,>=43.0.0\n\n"
+        "Requires-Dist: cryptography<51,>=43.0.0\n"
+        f"Requires-Dist: {filelock}\n"
+        f"Requires-Dist: {fastembed}\n"
+        "Requires-Dist: fastembed<=0.8.0; extra == \"codegraph\"\n\n"
     )
     with zipfile.ZipFile(wheel_path, "w") as archive:
         archive.writestr("cognee-1.4.1.dist-info/METADATA", metadata)
@@ -122,17 +178,20 @@ def test_verify_wheel_requires_patched_metadata_and_notices(tmp_path: Path) -> N
             'self.connection.execute("LOAD EXTENSION JSON;")\n',
         )
 
+    if error is not None:
+        with pytest.raises(RuntimeError, match=error):
+            build_secure_cognee.verify_wheel(wheel_path)
+        return
+
     evidence = build_secure_cognee.verify_wheel(wheel_path)
 
     assert evidence["name"] == "cognee"
     assert evidence["version"] == "1.4.1"
     assert evidence["cryptography_requirement"] == "cryptography<51,>=43.0.0"
-    assert len(evidence["wheel_sha256"]) == 64
+    assert Requirement(evidence["filelock_requirement"]).specifier.contains("4.2.1")
+    assert Requirement(evidence["fastembed_requirement"]).specifier.contains("0.9.1")
 
 
-def test_expected_wheel_hash_matches_a_sha256_digest() -> None:
-    assert len(build_secure_cognee.WHEEL_SHA256) == 64
-    assert all(character in "0123456789abcdef" for character in build_secure_cognee.WHEEL_SHA256)
 
 
 def test_build_rejects_an_unpinned_hatchling(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

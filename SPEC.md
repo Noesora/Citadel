@@ -12,6 +12,7 @@ A2 readiness → bounded truthful corpus gate (≤20,000), additive stage health
 - Preserve ADR-0018/0020: authoritative counts; names match counted scope; unknown/missing ≠ `0`; no restart counter as corpus truth. [VERIFIED: `docs/adr/0018*`, `0020*`]
 - Preserve module-scope vault-state cache; settled cached `null` MUST NOT retry or become green in same page load. [VERIFIED: `web/src/lib/vault-state.ts:54-67`]
 - Local #247 work uses synthetic fixtures only; no live reprocessing, deployment, production benchmark, graph rebuild, or external data write.
+- Approved R4-R6 security slice: update targeted dependency constraints and audited Cognee build metadata. Preserve Cognee 1.4.1 runtime code, the existing Ladybug home patch, model/provider choices, and storage formats. Do not weaken the audit.
 
 ## §I INTERFACES
 - api: `GET /readyz` (authenticated) → existing fields `{ok, service, tenant_id, default_dataset, auto_improve, build_global_context_index, corpus, lifecycle, canary}` plus additive `stages`.
@@ -37,6 +38,7 @@ V10: ∀ bounded-search HTTP error → full bounded body redacted before 500-cha
 V11: ∀ local #247 fixture → repair splits oversized content into chunks ≤ configured embedder budget & distinctive tail content retrieves from a non-head chunk; local proof ≠ production corpus proof.
 V12: ∀ public contact submit → success only if 2xx JSON receipt confirms `stored=true` or `delivered=true`; 2xx HTML or unknown body ≠ success.
 V13: ∀ contact submit before hydration → native `POST /contact`; name, email, message ∉ URL.
+V21: Supported server installs MUST pass dependency compatibility checks with cryptography 50.0.0, Filelock >=4.2.1,<5, and Fastembed 0.9.1. The audited Cognee 1.4.1 build MUST verify fixed source/wheel hashes and retain upstream notices. CI MUST reject incompatible installed requirements; the existing audit ignore list stays unchanged.
 
 ## §T TASKS
 id|status|task|cites
@@ -49,6 +51,7 @@ T6|.|update vault-state result handling: settled false pending; settled true cac
 T7|.|fix SectionIndex null-state false-green: render `Loading` pending, `Unavailable · reload page` after failure, warning state on unavailable|V8,V9,I.web
 T8|.|add frontend/static-export regressions for pending/failure labels and removal of null→Live fallback|V8
 T9|x|repair local oversized-chunk fixture into bounded chunks & prove tail retrieval; bounded repair selection/journal proof; no production reprocessing|V11,I.test
+T14|~|resolve targeted dependency advisories; verify reproducible SDK metadata, compatible installs, offline embeddings, and exact-head CI|V21
 
 ## §B BUGS
 id|date|cause|fix
@@ -58,6 +61,8 @@ B3|2026-09-15|offline vector regression compared marker tokenization without its
 B4|2026-09-15|non-monotonic prefix count can place over-limit fallback piece into current without guard|V11
 B5|2026-10-01|Pages `/contact` 2xx HTML fallback counted as delivered without receipt|V12
 B6|2026-10-01|contact form omitted method/action; prehydration submit encoded PII in GET URL|V13
+B9|2026-10-26|VERIFIED: CI run 40343624243 reported 83 known vulnerabilities in 12 packages. Upstream SDK dependency caps blocked the fixed Filelock and Pillow graph; a later LiteLLM candidate also rejected Filelock 4.|V21
+
 ## Least confident decisions
 1. Stage shape: additive top-level `stages` map with four named `{status, reason}` values chosen; [INFERRED: user specified field names/status vocabulary, while current code has no finalized schema].
 2. `pending` vs `unavailable`: unmeasured-but-expected stages use `pending`; dependency/read path unavailable uses `unavailable`; [INFERRED: distinguishes work not finished from no measurement, consistent with ADR-0020 missing ≠ zero].

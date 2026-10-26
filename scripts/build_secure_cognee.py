@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import argparse
-from email.parser import BytesParser
 import hashlib
-from importlib import metadata
 import json
-from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
-from urllib.request import urlopen
 import zipfile
+from email.parser import BytesParser
+from importlib import metadata
+from pathlib import Path
+from urllib.request import urlopen
 
+from packaging.requirements import Requirement
 
 COGNEE_VERSION = "1.4.1"
 COGNEE_TAG_COMMIT = "82bc3de9062af26ebcac3d61343d7e1a4f577586"
@@ -25,13 +26,25 @@ SOURCE_URL = (
     "cognee-1.4.1.tar.gz"
 )
 SOURCE_SHA256 = "9206075539935ef0adfab82cf410af6799e83c42969ba7c8fae5065de9aba7c9"
-WHEEL_SHA256 = "890a5a5c7d4bce9053faa45e4ce5f19aa1f7dbce235c3d4ea6ab3c3b77bb873c"
+WHEEL_SHA256 = "3a3b86873695ac8008d0561970efeaeedf6d6bc7fb3d9a6ee696ee8ef697d018"
 HATCHLING_VERSION = "1.31.0"
 ORIGINAL_REQUIREMENT = '    "cryptography>=43.0.0,<50",'
 PATCHED_REQUIREMENT = '    "cryptography>=43.0.0,<51",'
 PATCH_NOTICE = (
     "    # Modified by Citadel on 2026-08-08. Cryptography 50.0.0 fixes "
     "CVE-2026-69247."
+)
+FILELOCK_ORIGINAL_REQUIREMENT = '    "filelock>=3.12.0,<4.0.0",'
+FILELOCK_PATCHED_REQUIREMENT = '    "filelock>=4.2.1,<5.0.0",'
+FASTEMBED_ORIGINAL_REQUIREMENT = '    "fastembed<=0.8.0",'
+FASTEMBED_PATCHED_REQUIREMENT = '    "fastembed==0.9.1",'
+SECURITY_PATCH_NOTICE = (
+    "    # Modified by Citadel on 2026-10-26: permit the audited security dependency floors."
+)
+METADATA_PATCHES = (
+    (ORIGINAL_REQUIREMENT, PATCHED_REQUIREMENT, PATCH_NOTICE),
+    (FILELOCK_ORIGINAL_REQUIREMENT, FILELOCK_PATCHED_REQUIREMENT, SECURITY_PATCH_NOTICE),
+    (FASTEMBED_ORIGINAL_REQUIREMENT, FASTEMBED_PATCHED_REQUIREMENT, SECURITY_PATCH_NOTICE),
 )
 LADYBUG_HELPER_PATH = Path("cognee_db_workers/_kuzu_helpers.py")
 LADYBUG_WORKER_PATH = Path("cognee_db_workers/kuzu_worker.py")
@@ -172,15 +185,12 @@ def extract_source(archive_path: Path, destination: Path) -> Path:
 def patch_pyproject(source_root: Path) -> Path:
     pyproject = source_root / "pyproject.toml"
     content = pyproject.read_text(encoding="utf-8")
-    if content.count(ORIGINAL_REQUIREMENT) != 1:
-        raise RuntimeError("Cognee cryptography requirement did not match the audited source")
-    if PATCH_NOTICE in content or PATCHED_REQUIREMENT in content:
-        raise RuntimeError("Cognee source already contains the Citadel metadata patch")
-    content = content.replace(
-        ORIGINAL_REQUIREMENT,
-        f"{PATCH_NOTICE}\n{PATCHED_REQUIREMENT}",
-        1,
-    )
+    for original, patched, notice in METADATA_PATCHES:
+        if content.count(original) != 1:
+            raise RuntimeError("Cognee dependency requirement did not match the audited source")
+        if patched in content:
+            raise RuntimeError("Cognee source already contains the Citadel metadata patch")
+        content = content.replace(original, f"{notice}\n{patched}", 1)
     pyproject.write_text(content, encoding="utf-8")
     return pyproject
 
@@ -246,6 +256,25 @@ def verify_wheel(wheel_path: Path) -> dict[str, str]:
         cryptography = [item for item in requirements if item.lower().startswith("cryptography")]
         if len(cryptography) != 1 or "<51" not in cryptography[0] or "<50" in cryptography[0]:
             raise RuntimeError(f"Cognee wheel has unsafe cryptography metadata: {cryptography}")
+        parsed_requirements = [(item, Requirement(item)) for item in requirements]
+        filelock = [
+            (item, requirement) for item, requirement in parsed_requirements
+            if requirement.name == "filelock"
+        ]
+        if (
+            len(filelock) != 1
+            or not filelock[0][1].specifier.contains("4.2.1")
+            or filelock[0][1].specifier.contains("3.29.0")
+            or filelock[0][1].specifier.contains("5.0.0")
+        ):
+            raise RuntimeError("Cognee wheel has unsafe Filelock metadata")
+        fastembed = [
+            (item, requirement) for item, requirement in parsed_requirements
+            if requirement.name == "fastembed"
+            and (requirement.marker is None or requirement.marker.evaluate({"extra": "fastembed"}))
+        ]
+        if len(fastembed) != 1 or str(fastembed[0][1].specifier) != "==0.9.1":
+            raise RuntimeError("Cognee wheel has an unexpected Fastembed companion")
         basenames = {Path(name).name for name in names}
         if "LICENSE" not in basenames or "NOTICE.md" not in basenames:
             raise RuntimeError("Cognee wheel is missing LICENSE or NOTICE.md")
@@ -282,6 +311,8 @@ def verify_wheel(wheel_path: Path) -> dict[str, str]:
         "name": str(metadata["Name"]),
         "version": str(metadata["Version"]),
         "cryptography_requirement": cryptography[0],
+        "filelock_requirement": filelock[0][0],
+        "fastembed_requirement": fastembed[0][0],
         "wheel_sha256": sha256_file(wheel_path),
     }
 
@@ -310,7 +341,10 @@ def build(output_dir: Path) -> tuple[Path, Path]:
         "source_url": SOURCE_URL,
         "source_sha256": SOURCE_SHA256,
         "hatchling_version": HATCHLING_VERSION,
-        "patch": f"{ORIGINAL_REQUIREMENT} -> {PATCHED_REQUIREMENT}",
+        "metadata_patches": [
+            {"original": original.strip(), "patched": patched.strip()}
+            for original, patched, _notice in METADATA_PATCHES
+        ],
         "ladybug_home_patch": [
             LADYBUG_HELPER_PATH.as_posix(),
             LADYBUG_WORKER_PATH.as_posix(),
